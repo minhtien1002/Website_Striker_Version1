@@ -1,0 +1,1784 @@
+/* =========================================================================
+   DATABASE_STRIKER_FINAL - FILE HOÀN CHỈNH (SCHEMA GỐC + DỮ LIỆU MẪU)
+   -------------------------------------------------------------------------
+   PHẦN 1: Xoá database cũ (nếu có)
+   PHẦN 2: Schema gốc bạn gửi, giữ nguyên 100%
+   PHẦN 3: Dữ liệu mẫu - TOÀN BỘ SẢN PHẨM LÀ ÁO THỂ THAO
+
+   >>> TRƯỚC KHI CHẠY, LÀM ĐÚNG 2 VIỆC SAU:
+       1. Tắt ứng dụng (Spring Boot / IntelliJ) nếu đang chạy.
+       2. Trong SSMS, đổi ô dropdown chọn database ở thanh công cụ
+          từ "Database_STRIKER_Final" sang "master".
+          Nếu không đổi, SSMS vẫn giữ kết nối và lệnh xoá sẽ báo lỗi lock.
+
+   Sau đó: F5 để chạy cả file.
+   ========================================================================= */
+
+/* =========================================================================
+   PHẦN 1 - XOÁ DATABASE CŨ
+   ========================================================================= */
+USE [master]
+GO
+
+IF DB_ID(N'Database_STRIKER_Final') IS NOT NULL
+BEGIN
+    PRINT N'>>> Dang dong cac ket noi va xoa database cu...';
+    ALTER DATABASE [Database_STRIKER_Final] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [Database_STRIKER_Final];
+    PRINT N'>>> Da xoa database cu.';
+END
+ELSE
+    PRINT N'>>> Database chua ton tai, tao moi.';
+GO
+
+/* =========================================================================
+   PHẦN 2 - SCHEMA GỐC (giữ nguyên như file bạn gửi)
+   ========================================================================= */
+CREATE DATABASE [Database_STRIKER_Final]
+ CONTAINMENT = NONE
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET COMPATIBILITY_LEVEL = 160
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [Database_STRIKER_Final].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET  ENABLE_BROKER 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET  MULTI_USER 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET QUERY_STORE = ON
+GO
+ALTER DATABASE [Database_STRIKER_Final] SET QUERY_STORE (OPERATION_MODE = READ_WRITE, CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30), DATA_FLUSH_INTERVAL_SECONDS = 900, INTERVAL_LENGTH_MINUTES = 60, MAX_STORAGE_SIZE_MB = 1000, QUERY_CAPTURE_MODE = AUTO, SIZE_BASED_CLEANUP_MODE = AUTO, MAX_PLANS_PER_QUERY = 200, WAIT_STATS_CAPTURE_MODE = ON)
+GO
+USE [Database_STRIKER_Final]
+GO
+/****** Object:  Table [dbo].[anh_san_pham] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[anh_san_pham](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[url_anh] [nvarchar](max) NULL,
+	[la_anh_dai_dien] [bit] NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[chat_lieu] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[chat_lieu](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_chat_lieu] [nvarchar](100) NOT NULL,
+	[ma_chat_lieu] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[chi_tiet_dot_giam_gia] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[chi_tiet_dot_giam_gia](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_dot_giam_gia] [int] NOT NULL,
+	[id_chi_tiet_sp] [int] NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[gia_ban_dau] [decimal](18, 2) NOT NULL,
+	[gia_sau_khi_giam] [decimal](18, 2) NOT NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[chi_tiet_san_pham] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[chi_tiet_san_pham](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_mau_sac] [int] NULL,
+	[id_kich_co] [int] NULL,
+	[id_san_pham] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[so_luong_ton_kho] [int] NOT NULL,
+	[mo_ta_chi_tiet] [nvarchar](500) NULL,
+	[gia_nhap] [decimal](19, 2) NOT NULL,
+	[gia_ban] [decimal](19, 2) NOT NULL,
+	[ngay_nhap] [datetime] NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NULL,
+	[id_anh_san_pham] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[cong_nghe_vai] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[cong_nghe_vai](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_cong_nghe] [nvarchar](100) NOT NULL,
+	[ma_cong_nghe] [nvarchar](255) NULL,
+	[mo_ta] [nvarchar](500) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[danh_muc] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[danh_muc](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_danh_muc] [nvarchar](100) NOT NULL,
+	[ma_danh_muc] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[dia_chi_khach_hang] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[dia_chi_khach_hang](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_khach_hang] [int] NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[thanh_pho] [nvarchar](255) NOT NULL,
+	[quan] [nvarchar](255) NOT NULL,
+	[phuong] [nvarchar](255) NOT NULL,
+	[dia_chi_cu_the] [nvarchar](255) NOT NULL,
+	[mac_dinh] [bit] NOT NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[dot_giam_gia] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[dot_giam_gia](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten_dot_giam_gia] [nvarchar](255) NOT NULL,
+	[loai_giam_gia_ap_dung] [nvarchar](255) NOT NULL,
+	[gia_tri_giam_gia] [decimal](18, 2) NOT NULL,
+	[so_tien_giam_toi_da] [decimal](18, 2) NOT NULL,
+	[ngay_bat_dau] [date] NULL,
+	[ngay_ket_thuc] [date] NULL,
+	[trang_thai] [bit] NOT NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[gio_hang] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[gio_hang](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_khach_hang] [int] NULL,
+	[id_hoa_don] [int] NULL,
+	[tong_tien] [decimal](18, 2) NOT NULL,
+	[created_at] [datetime] NULL,
+	[updated_at] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[gio_hang_chi_tiet] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[gio_hang_chi_tiet](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_gio_hang] [int] NOT NULL,
+	[id_chi_tiet_sp] [int] NOT NULL,
+	[so_luong] [int] NOT NULL,
+	[gia] [decimal](18, 2) NOT NULL,
+	[thanh_tien] [decimal](18, 2) NOT NULL,
+	[created_at] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[hinh_thuc_thanh_toan] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[hinh_thuc_thanh_toan](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_hoa_don] [int] NOT NULL,
+	[id_phuong_thuc_thanh_toan] [int] NOT NULL,
+	[tien_chuyen_khoan] [decimal](18, 2) NOT NULL,
+	[tien_mat] [decimal](18, 2) NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[hoa_don] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[hoa_don](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_khach_hang] [int] NOT NULL,
+	[id_nhan_vien] [int] NOT NULL,
+	[id_phieu_giam_gia] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[tien_san_pham] [decimal](18, 2) NOT NULL,
+	[loai_don] [nvarchar](255) NOT NULL,
+	[phi_van_chuyen] [decimal](18, 2) NOT NULL,
+	[tong_tien] [numeric](38, 2) NULL,
+	[tong_tien_sau_giam] [numeric](38, 2) NULL,
+	[ghi_chu] [nvarchar](255) NULL,
+	[ten_khach_hang] [nvarchar](255) NOT NULL,
+	[dia_chi_khach_hang] [nvarchar](255) NOT NULL,
+	[so_dien_thoai_khach_hang] [varchar](255) NULL,
+	[email] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NOT NULL,
+	[ngay_thanh_toan] [datetimeoffset](6) NULL,
+	[trang_thai] [tinyint] NOT NULL,
+	[deleted] [bit] NOT NULL,
+	[created_at] [datetime] NOT NULL,
+	[created_by] [int] NULL,
+	[updated_at] [datetime2](6) NULL,
+	[updated_by] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[hoa_don_chi_tiet] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[hoa_don_chi_tiet](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_hoa_don] [int] NOT NULL,
+	[id_chi_tiet_sp] [int] NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[gia] [decimal](18, 2) NOT NULL,
+	[trang_thai] [tinyint] NOT NULL,
+	[ghi_chu] [nvarchar](255) NULL,
+	[deleted] [bit] NOT NULL,
+	[so_luong] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[khach_hang] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[khach_hang](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_tai_khoan] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten] [nvarchar](255) NULL,
+	[gioi_tinh] [tinyint] NULL,
+	[ngay_sinh] [datetime2](6) NULL,
+	[deleted] [bit] NULL,
+	[created_at] [datetime2](6) NULL,
+	[created_by] [int] NULL,
+	[updated_at] [datetime2](6) NULL,
+	[updated_by] [int] NULL,
+	[cccd] [nvarchar](255) NULL,
+	[id_dia_chi_khach_hang] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[kich_co] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[kich_co](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_kich_co] [nvarchar](50) NOT NULL,
+	[ma_kich_co] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[lich_su_hoa_don] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[lich_su_hoa_don](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_hoa_don] [int] NOT NULL,
+	[id_nhan_vien] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[hanh_dong] [nvarchar](255) NULL,
+	[thoi_gian] [datetimeoffset](6) NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[mau_sac] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[mau_sac](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_mau_sac] [nvarchar](100) NOT NULL,
+	[ma_mau_sac] [nvarchar](255) NULL,
+	[hex] [varchar](7) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[mon_the_thao] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[mon_the_thao](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_mon_the_thao] [nvarchar](100) NOT NULL,
+	[ma_mon_the_thao] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[nhan_vien] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[nhan_vien](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_tai_khoan] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten_nhan_vien] [nvarchar](255) NULL,
+	[ngay_sinh] [datetime2](6) NULL,
+	[anh_nhan_vien] [nvarchar](255) NULL,
+	[ghi_chu] [nvarchar](255) NULL,
+	[thanh_pho] [nvarchar](255) NULL,
+	[quan] [nvarchar](255) NULL,
+	[phuong] [nvarchar](255) NULL,
+	[dia_chi_cu_the] [nvarchar](255) NULL,
+	[cccd] [nvarchar](255) NULL,
+	[deleted] [bit] NULL,
+	[created_at] [datetimeoffset](6) NULL,
+	[created_by] [int] NULL,
+	[updated_at] [datetimeoffset](6) NULL,
+	[updated_by] [int] NULL,
+	[gioi_tinh] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[phieu_giam_gia] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[phieu_giam_gia](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten_phieu_giam_gia] [nvarchar](255) NULL,
+	[loai_phieu_giam_gia] [nvarchar](255) NULL,
+	[phan_tram_giam_gia] [float] NULL,
+	[so_tien_giam_toi_da] [float] NULL,
+	[hoa_don_toi_thieu] [float] NULL,
+	[so_luong_dung] [int] NULL,
+	[ngay_bat_dau] [datetime2](6) NULL,
+	[ngay_ket_thuc] [datetime2](6) NULL,
+	[trang_thai] [bit] NULL,
+	[rieng_tu] [bit] NULL,
+	[mo_ta] [nvarchar](255) NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[phieu_giam_gia_ca_nhan] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[phieu_giam_gia_ca_nhan](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_phieu_giam_gia] [int] NULL,
+	[id_khach_hang] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[ngay_nhan] [datetime2](6) NULL,
+	[ngay_het_han] [datetime2](6) NULL,
+	[trang_thai] [bit] NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[phuong_thuc_thanh_toan] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[phuong_thuc_thanh_toan](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[kieu_thanh_toan] [nvarchar](255) NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[quyen_han] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[quyen_han](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ma] [nvarchar](255) NULL,
+	[cap_quyen_han] [int] NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[san_pham] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[san_pham](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_danh_muc] [int] NULL,
+	[id_thuong_hieu] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten_san_pham] [nvarchar](255) NOT NULL,
+	[mo_ta_san_pham] [nvarchar](max) NULL,
+	[quoc_gia_san_xuat] [nvarchar](100) NULL,
+	[gioi_tinh] [tinyint] NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NULL,
+	[id_anh_san_pham] [int] NULL,
+	[id_chat_lieu] [int] NULL,
+	[id_cong_nghe_vai] [int] NULL,
+	[id_mon_the_thao] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[tai_khoan] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[tai_khoan](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id_quyen_han] [int] NULL,
+	[ma] [nvarchar](255) NULL,
+	[ten_dang_nhap] [nvarchar](255) NULL,
+	[email] [nvarchar](255) NULL,
+	[so_dien_thoai] [nvarchar](255) NULL,
+	[mat_khau] [nvarchar](255) NULL,
+	[deleted] [bit] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[thuong_hieu] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[thuong_hieu](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[ten_thuong_hieu] [nvarchar](100) NOT NULL,
+	[ma_thuong_hieu] [nvarchar](255) NULL,
+	[ngay_tao] [datetime] NULL,
+	[ngay_cap_nhat] [datetime] NULL,
+	[deleted] [bit] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[anh_san_pham] ADD  DEFAULT ((0)) FOR [la_anh_dai_dien]
+GO
+ALTER TABLE [dbo].[anh_san_pham] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[anh_san_pham] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[anh_san_pham] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[chat_lieu] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[chat_lieu] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[chat_lieu] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] ADD  DEFAULT ((0)) FOR [so_luong_ton_kho]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] ADD  DEFAULT (getdate()) FOR [ngay_nhap]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[cong_nghe_vai] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[cong_nghe_vai] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[cong_nghe_vai] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[danh_muc] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[danh_muc] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[danh_muc] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[dia_chi_khach_hang] ADD  DEFAULT ((0)) FOR [mac_dinh]
+GO
+ALTER TABLE [dbo].[dot_giam_gia] ADD  DEFAULT ((1)) FOR [trang_thai]
+GO
+ALTER TABLE [dbo].[gio_hang] ADD  DEFAULT ((0)) FOR [tong_tien]
+GO
+ALTER TABLE [dbo].[gio_hang] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[gio_hang] ADD  DEFAULT (getdate()) FOR [updated_at]
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet] ADD  DEFAULT ((1)) FOR [so_luong]
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan] ADD  DEFAULT ((0)) FOR [tien_chuyen_khoan]
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan] ADD  DEFAULT ((0)) FOR [tien_mat]
+GO
+ALTER TABLE [dbo].[hoa_don] ADD  DEFAULT ((0)) FOR [phi_van_chuyen]
+GO
+ALTER TABLE [dbo].[hoa_don] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[hoa_don] ADD  DEFAULT ((1)) FOR [trang_thai]
+GO
+ALTER TABLE [dbo].[hoa_don] ADD  DEFAULT (getdate()) FOR [created_at]
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet] ADD  DEFAULT ((1)) FOR [trang_thai]
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet] ADD  DEFAULT ((1)) FOR [so_luong]
+GO
+ALTER TABLE [dbo].[kich_co] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[kich_co] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[kich_co] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[mau_sac] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[mau_sac] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[mau_sac] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[mon_the_thao] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[mon_the_thao] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[mon_the_thao] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[san_pham] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[san_pham] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[thuong_hieu] ADD  DEFAULT (getdate()) FOR [ngay_tao]
+GO
+ALTER TABLE [dbo].[thuong_hieu] ADD  DEFAULT (getdate()) FOR [ngay_cap_nhat]
+GO
+ALTER TABLE [dbo].[thuong_hieu] ADD  DEFAULT ((0)) FOR [deleted]
+GO
+ALTER TABLE [dbo].[chi_tiet_dot_giam_gia]  WITH CHECK ADD  CONSTRAINT [FK_CTDGG_CTSP] FOREIGN KEY([id_chi_tiet_sp])
+REFERENCES [dbo].[chi_tiet_san_pham] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_dot_giam_gia] CHECK CONSTRAINT [FK_CTDGG_CTSP]
+GO
+ALTER TABLE [dbo].[chi_tiet_dot_giam_gia]  WITH CHECK ADD  CONSTRAINT [FK_CTDGG_DotGiamGia] FOREIGN KEY([id_dot_giam_gia])
+REFERENCES [dbo].[dot_giam_gia] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_dot_giam_gia] CHECK CONSTRAINT [FK_CTDGG_DotGiamGia]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham]  WITH CHECK ADD  CONSTRAINT [FK_CTSP_AnhSP] FOREIGN KEY([id_anh_san_pham])
+REFERENCES [dbo].[anh_san_pham] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] CHECK CONSTRAINT [FK_CTSP_AnhSP]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham]  WITH CHECK ADD  CONSTRAINT [FK_CTSP_KichCo] FOREIGN KEY([id_kich_co])
+REFERENCES [dbo].[kich_co] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] CHECK CONSTRAINT [FK_CTSP_KichCo]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham]  WITH CHECK ADD  CONSTRAINT [FK_CTSP_MauSac] FOREIGN KEY([id_mau_sac])
+REFERENCES [dbo].[mau_sac] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] CHECK CONSTRAINT [FK_CTSP_MauSac]
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham]  WITH CHECK ADD  CONSTRAINT [FK_CTSP_SanPham] FOREIGN KEY([id_san_pham])
+REFERENCES [dbo].[san_pham] ([id])
+GO
+ALTER TABLE [dbo].[chi_tiet_san_pham] CHECK CONSTRAINT [FK_CTSP_SanPham]
+GO
+ALTER TABLE [dbo].[dia_chi_khach_hang]  WITH CHECK ADD  CONSTRAINT [FK_DiaChiKH_KhachHang] FOREIGN KEY([id_khach_hang])
+REFERENCES [dbo].[khach_hang] ([id])
+GO
+ALTER TABLE [dbo].[dia_chi_khach_hang] CHECK CONSTRAINT [FK_DiaChiKH_KhachHang]
+GO
+ALTER TABLE [dbo].[gio_hang]  WITH CHECK ADD  CONSTRAINT [FK_GioHang_HoaDon] FOREIGN KEY([id_hoa_don])
+REFERENCES [dbo].[hoa_don] ([id])
+GO
+ALTER TABLE [dbo].[gio_hang] CHECK CONSTRAINT [FK_GioHang_HoaDon]
+GO
+ALTER TABLE [dbo].[gio_hang]  WITH CHECK ADD  CONSTRAINT [FK_GioHang_KhachHang] FOREIGN KEY([id_khach_hang])
+REFERENCES [dbo].[khach_hang] ([id])
+GO
+ALTER TABLE [dbo].[gio_hang] CHECK CONSTRAINT [FK_GioHang_KhachHang]
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet]  WITH CHECK ADD  CONSTRAINT [FK_GHCT_CTSP] FOREIGN KEY([id_chi_tiet_sp])
+REFERENCES [dbo].[chi_tiet_san_pham] ([id])
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet] CHECK CONSTRAINT [FK_GHCT_CTSP]
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet]  WITH CHECK ADD  CONSTRAINT [FK_GHCT_GioHang] FOREIGN KEY([id_gio_hang])
+REFERENCES [dbo].[gio_hang] ([id])
+GO
+ALTER TABLE [dbo].[gio_hang_chi_tiet] CHECK CONSTRAINT [FK_GHCT_GioHang]
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan]  WITH CHECK ADD  CONSTRAINT [FK_HTTT_HoaDon] FOREIGN KEY([id_hoa_don])
+REFERENCES [dbo].[hoa_don] ([id])
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan] CHECK CONSTRAINT [FK_HTTT_HoaDon]
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan]  WITH CHECK ADD  CONSTRAINT [FK_HTTT_PhuongThuc] FOREIGN KEY([id_phuong_thuc_thanh_toan])
+REFERENCES [dbo].[phuong_thuc_thanh_toan] ([id])
+GO
+ALTER TABLE [dbo].[hinh_thuc_thanh_toan] CHECK CONSTRAINT [FK_HTTT_PhuongThuc]
+GO
+ALTER TABLE [dbo].[hoa_don]  WITH CHECK ADD  CONSTRAINT [FK_HoaDon_KhachHang] FOREIGN KEY([id_khach_hang])
+REFERENCES [dbo].[khach_hang] ([id])
+GO
+ALTER TABLE [dbo].[hoa_don] CHECK CONSTRAINT [FK_HoaDon_KhachHang]
+GO
+ALTER TABLE [dbo].[hoa_don]  WITH CHECK ADD  CONSTRAINT [FK_HoaDon_NhanVien] FOREIGN KEY([id_nhan_vien])
+REFERENCES [dbo].[nhan_vien] ([id])
+GO
+ALTER TABLE [dbo].[hoa_don] CHECK CONSTRAINT [FK_HoaDon_NhanVien]
+GO
+ALTER TABLE [dbo].[hoa_don]  WITH CHECK ADD  CONSTRAINT [FK_HoaDon_PhieuGiamGia] FOREIGN KEY([id_phieu_giam_gia])
+REFERENCES [dbo].[phieu_giam_gia] ([id])
+GO
+ALTER TABLE [dbo].[hoa_don] CHECK CONSTRAINT [FK_HoaDon_PhieuGiamGia]
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet]  WITH CHECK ADD  CONSTRAINT [FK_HDCT_CTSP] FOREIGN KEY([id_chi_tiet_sp])
+REFERENCES [dbo].[chi_tiet_san_pham] ([id])
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet] CHECK CONSTRAINT [FK_HDCT_CTSP]
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet]  WITH CHECK ADD  CONSTRAINT [FK_HDCT_HoaDon] FOREIGN KEY([id_hoa_don])
+REFERENCES [dbo].[hoa_don] ([id])
+GO
+ALTER TABLE [dbo].[hoa_don_chi_tiet] CHECK CONSTRAINT [FK_HDCT_HoaDon]
+GO
+ALTER TABLE [dbo].[khach_hang]  WITH CHECK ADD  CONSTRAINT [FK_KhachHang_DiaChi] FOREIGN KEY([id_dia_chi_khach_hang])
+REFERENCES [dbo].[dia_chi_khach_hang] ([id])
+GO
+ALTER TABLE [dbo].[khach_hang] CHECK CONSTRAINT [FK_KhachHang_DiaChi]
+GO
+ALTER TABLE [dbo].[khach_hang]  WITH CHECK ADD  CONSTRAINT [FK_KhachHang_TaiKhoan] FOREIGN KEY([id_tai_khoan])
+REFERENCES [dbo].[tai_khoan] ([id])
+GO
+ALTER TABLE [dbo].[khach_hang] CHECK CONSTRAINT [FK_KhachHang_TaiKhoan]
+GO
+ALTER TABLE [dbo].[lich_su_hoa_don]  WITH CHECK ADD  CONSTRAINT [FK_LSHD_HoaDon] FOREIGN KEY([id_hoa_don])
+REFERENCES [dbo].[hoa_don] ([id])
+GO
+ALTER TABLE [dbo].[lich_su_hoa_don] CHECK CONSTRAINT [FK_LSHD_HoaDon]
+GO
+ALTER TABLE [dbo].[lich_su_hoa_don]  WITH CHECK ADD  CONSTRAINT [FK_LSHD_NhanVien] FOREIGN KEY([id_nhan_vien])
+REFERENCES [dbo].[nhan_vien] ([id])
+GO
+ALTER TABLE [dbo].[lich_su_hoa_don] CHECK CONSTRAINT [FK_LSHD_NhanVien]
+GO
+ALTER TABLE [dbo].[nhan_vien]  WITH CHECK ADD  CONSTRAINT [FK_NhanVien_TaiKhoan] FOREIGN KEY([id_tai_khoan])
+REFERENCES [dbo].[tai_khoan] ([id])
+GO
+ALTER TABLE [dbo].[nhan_vien] CHECK CONSTRAINT [FK_NhanVien_TaiKhoan]
+GO
+ALTER TABLE [dbo].[phieu_giam_gia_ca_nhan]  WITH CHECK ADD  CONSTRAINT [FK_PGGCN_KhachHang] FOREIGN KEY([id_khach_hang])
+REFERENCES [dbo].[khach_hang] ([id])
+GO
+ALTER TABLE [dbo].[phieu_giam_gia_ca_nhan] CHECK CONSTRAINT [FK_PGGCN_KhachHang]
+GO
+ALTER TABLE [dbo].[phieu_giam_gia_ca_nhan]  WITH CHECK ADD  CONSTRAINT [FK_PGGCN_PhieuGiamGia] FOREIGN KEY([id_phieu_giam_gia])
+REFERENCES [dbo].[phieu_giam_gia] ([id])
+GO
+ALTER TABLE [dbo].[phieu_giam_gia_ca_nhan] CHECK CONSTRAINT [FK_PGGCN_PhieuGiamGia]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_AnhSP] FOREIGN KEY([id_anh_san_pham])
+REFERENCES [dbo].[anh_san_pham] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_AnhSP]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_ChatLieu] FOREIGN KEY([id_chat_lieu])
+REFERENCES [dbo].[chat_lieu] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_ChatLieu]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_CongNgheVai] FOREIGN KEY([id_cong_nghe_vai])
+REFERENCES [dbo].[cong_nghe_vai] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_CongNgheVai]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_DanhMuc] FOREIGN KEY([id_danh_muc])
+REFERENCES [dbo].[danh_muc] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_DanhMuc]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_MonTheThao] FOREIGN KEY([id_mon_the_thao])
+REFERENCES [dbo].[mon_the_thao] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_MonTheThao]
+GO
+ALTER TABLE [dbo].[san_pham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_ThuongHieu] FOREIGN KEY([id_thuong_hieu])
+REFERENCES [dbo].[thuong_hieu] ([id])
+GO
+ALTER TABLE [dbo].[san_pham] CHECK CONSTRAINT [FK_SanPham_ThuongHieu]
+GO
+ALTER TABLE [dbo].[tai_khoan]  WITH CHECK ADD  CONSTRAINT [FK_TaiKhoan_QuyenHan] FOREIGN KEY([id_quyen_han])
+REFERENCES [dbo].[quyen_han] ([id])
+GO
+ALTER TABLE [dbo].[tai_khoan] CHECK CONSTRAINT [FK_TaiKhoan_QuyenHan]
+GO
+
+PRINT N'>>> PHAN 2 XONG: da tao xong database va 26 bang.';
+GO
+
+/* =========================================================================
+   PHẦN 3 - CHÈN DỮ LIỆU MẪU
+   ========================================================================= */
+USE [Database_STRIKER_Final]
+GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+/* =========================================================================
+   1. QUYỀN HẠN
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.quyen_han ON;
+INSERT INTO dbo.quyen_han (id, ma, cap_quyen_han, deleted) VALUES
+(1, N'ADMIN',      1, 0),
+(2, N'NHAN_VIEN',  2, 0),
+(3, N'KHACH_HANG', 3, 0);
+SET IDENTITY_INSERT dbo.quyen_han OFF;
+GO
+
+/* =========================================================================
+   2. TÀI KHOẢN  (mật khẩu mẫu BCrypt của chuỗi: 123456)
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.tai_khoan ON;
+INSERT INTO dbo.tai_khoan (id, id_quyen_han, ma, ten_dang_nhap, email, so_dien_thoai, mat_khau, deleted) VALUES
+(1,  1, N'TK001', N'admin',      N'admin@striker.vn',      N'0901000001', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(2,  2, N'TK002', N'nvhoang',    N'hoang.nv@striker.vn',   N'0901000002', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(3,  2, N'TK003', N'nvlinh',     N'linh.nv@striker.vn',    N'0901000003', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(4,  2, N'TK004', N'nvtuan',     N'tuan.nv@striker.vn',    N'0901000004', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(5,  2, N'TK005', N'nvmai',      N'mai.nv@striker.vn',     N'0901000005', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(6,  2, N'TK006', N'nvphuc',     N'phuc.nv@striker.vn',    N'0901000006', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(7,  2, N'TK007', N'nvhien',     N'hien.nv@striker.vn',    N'0901000007', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(8,  2, N'TK008', N'nvkhoa',     N'khoa.nv@striker.vn',    N'0901000008', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(9,  3, N'TK009', N'anhtuan99',  N'tuan.anh@gmail.com',    N'0912000001', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(10, 3, N'TK010', N'minhquan',   N'quan.minh@gmail.com',   N'0912000002', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(11, 3, N'TK011', N'thuhuong',   N'huong.thu@gmail.com',   N'0912000003', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(12, 3, N'TK012', N'ducanh',     N'anh.duc@gmail.com',     N'0912000004', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(13, 3, N'TK013', N'ngocmai',    N'mai.ngoc@gmail.com',    N'0912000005', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(14, 3, N'TK014', N'baolong',    N'long.bao@gmail.com',    N'0912000006', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(15, 3, N'TK015', N'phuongthao', N'thao.phuong@gmail.com', N'0912000007', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(16, 3, N'TK016', N'hoangnam',   N'nam.hoang@gmail.com',   N'0912000008', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(17, 3, N'TK017', N'khanhly',    N'ly.khanh@gmail.com',    N'0912000009', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(18, 3, N'TK018', N'vietcuong',  N'cuong.viet@gmail.com',  N'0912000010', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(19, 3, N'TK019', N'thanhtung',  N'tung.thanh@gmail.com',  N'0912000011', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(20, 3, N'TK020', N'ngahuyen',   N'huyen.nga@gmail.com',   N'0912000012', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(21, 3, N'TK021', N'quochuy',    N'huy.quoc@gmail.com',    N'0912000013', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(22, 3, N'TK022', N'thuyduong',  N'duong.thuy@gmail.com',  N'0912000014', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(23, 3, N'TK023', N'trungkien',  N'kien.trung@gmail.com',  N'0912000015', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(24, 3, N'TK024', N'lananh',     N'anh.lan@gmail.com',     N'0912000016', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(25, 3, N'TK025', N'gialinh',    N'linh.gia@gmail.com',    N'0912000017', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(26, 3, N'TK026', N'dangkhoa',   N'khoa.dang@gmail.com',   N'0912000018', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(27, 3, N'TK027', N'mytam',      N'tam.my@gmail.com',      N'0912000019', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0),
+(28, 3, N'TK028', N'huubinh',    N'binh.huu@gmail.com',    N'0912000020', N'$2a$10$K7l1c8Rk9zQ4vXqE2sT0eO5nHqbZ1w3sYtC2mJ8pR6uD4aF0gI9jK', 0);
+SET IDENTITY_INSERT dbo.tai_khoan OFF;
+GO
+
+/* =========================================================================
+   3. NHÂN VIÊN   (gioi_tinh: 1 = Nam, 0 = Nữ)
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.nhan_vien ON;
+INSERT INTO dbo.nhan_vien
+(id, id_tai_khoan, ma, ten_nhan_vien, ngay_sinh, anh_nhan_vien, ghi_chu, thanh_pho, quan, phuong, dia_chi_cu_the, cccd, deleted, created_at, created_by, updated_at, updated_by, gioi_tinh) VALUES
+(1, 1, N'NV001', N'Nguyễn Văn Sơn',   '1990-03-12T00:00:00', N'/images/nhan-vien/nv001.jpg', N'Quản trị hệ thống',      N'Hà Nội',      N'Cầu Giấy',     N'Dịch Vọng',     N'Số 12 ngõ 68 Trần Thái Tông', N'001090001234', 0, '2025-01-05T08:00:00+07:00', 1, '2026-01-10T09:15:00+07:00', 1, 1),
+(2, 2, N'NV002', N'Trần Minh Hoàng',  '1995-07-24T00:00:00', N'/images/nhan-vien/nv002.jpg', N'Nhân viên bán hàng',     N'Hà Nội',      N'Hai Bà Trưng', N'Bách Khoa',     N'Số 45 Lê Thanh Nghị',         N'001095004321', 0, '2025-02-11T08:30:00+07:00', 1, '2026-02-01T10:00:00+07:00', 1, 1),
+(3, 3, N'NV003', N'Lê Thùy Linh',     '1998-11-02T00:00:00', N'/images/nhan-vien/nv003.jpg', N'Nhân viên kho',          N'Hà Nội',      N'Đống Đa',      N'Khương Thượng', N'Số 7 ngách 21 Tôn Thất Tùng', N'001198007654', 0, '2025-03-20T09:00:00+07:00', 1, '2026-02-14T14:20:00+07:00', 2, 0),
+(4, 4, N'NV004', N'Phạm Anh Tuấn',    '1993-05-18T00:00:00', N'/images/nhan-vien/nv004.jpg', N'Nhân viên tư vấn',       N'Hồ Chí Minh', N'Quận 1',       N'Bến Nghé',      N'Số 88 Nguyễn Huệ',            N'079093001122', 0, '2025-05-02T08:15:00+07:00', 1, '2026-03-05T11:45:00+07:00', 2, 1),
+(5, 5, N'NV005', N'Đỗ Ngọc Mai',      '1999-09-09T00:00:00', N'/images/nhan-vien/nv005.jpg', N'Nhân viên bán hàng',     N'Đà Nẵng',     N'Hải Châu',     N'Thanh Bình',    N'Số 30 Nguyễn Tất Thành',      N'048199009988', 0, '2025-08-16T08:45:00+07:00', 1, '2026-04-01T16:30:00+07:00', 2, 0),
+(6, 6, N'NV006', N'Vũ Hồng Phúc',     '1996-01-27T00:00:00', N'/images/nhan-vien/nv006.jpg', N'Nhân viên in ấn áo đấu', N'Hà Nội',      N'Bắc Từ Liêm',  N'Cổ Nhuế 1',     N'Số 15 Phạm Văn Đồng',         N'001096112233', 0, '2025-09-08T08:00:00+07:00', 1, '2026-04-15T09:30:00+07:00', 1, 1),
+(7, 7, N'NV007', N'Ngô Thu Hiền',     '2000-06-14T00:00:00', N'/images/nhan-vien/nv007.jpg', N'Nhân viên CSKH',         N'Hồ Chí Minh', N'Gò Vấp',       N'Phường 10',     N'Số 250 Quang Trung',          N'079200334455', 0, '2025-11-03T09:20:00+07:00', 1, '2026-05-10T13:40:00+07:00', 1, 0),
+(8, 8, N'NV008', N'Trịnh Đăng Khoa',  '1997-04-05T00:00:00', N'/images/nhan-vien/nv008.jpg', N'Nhân viên kho',          N'Hải Phòng',   N'Ngô Quyền',    N'Máy Tơ',        N'Số 68 Lê Lợi',                N'031097556677', 0, '2026-01-12T08:10:00+07:00', 1, '2026-05-20T15:00:00+07:00', 1, 1);
+SET IDENTITY_INSERT dbo.nhan_vien OFF;
+GO
+
+/* =========================================================================
+   4. KHÁCH HÀNG  (id_dia_chi_khach_hang tạm NULL - cập nhật ở bước 6)
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.khach_hang ON;
+INSERT INTO dbo.khach_hang
+(id, id_tai_khoan, ma, ten, gioi_tinh, ngay_sinh, deleted, created_at, created_by, updated_at, updated_by, cccd, id_dia_chi_khach_hang) VALUES
+(1,  9,  N'KH001', N'Nguyễn Anh Tuấn',   1, '1999-01-15T00:00:00', 0, '2025-06-01T09:00:00', 1, '2026-01-12T10:00:00', 2, N'001099112233', NULL),
+(2,  10, N'KH002', N'Trần Minh Quân',    1, '2000-04-08T00:00:00', 0, '2025-06-14T10:20:00', 1, '2026-01-20T11:30:00', 2, N'001200223344', NULL),
+(3,  11, N'KH003', N'Lê Thu Hương',      0, '1997-12-25T00:00:00', 0, '2025-07-03T14:00:00', 1, '2026-02-02T09:10:00', 3, N'001197334455', NULL),
+(4,  12, N'KH004', N'Phạm Đức Anh',      1, '1996-08-19T00:00:00', 0, '2025-07-25T16:40:00', 1, '2026-02-18T15:25:00', 2, N'001196445566', NULL),
+(5,  13, N'KH005', N'Vũ Ngọc Mai',       0, '2001-02-11T00:00:00', 0, '2025-08-09T08:55:00', 1, '2026-03-01T08:40:00', 3, N'001201556677', NULL),
+(6,  14, N'KH006', N'Đặng Bảo Long',     1, '1994-06-30T00:00:00', 0, '2025-09-12T11:15:00', 1, '2026-03-11T13:05:00', 2, N'001194667788', NULL),
+(7,  15, N'KH007', N'Hoàng Phương Thảo', 0, '1998-10-05T00:00:00', 0, '2025-10-01T13:30:00', 1, '2026-03-22T17:00:00', 5, N'001198778899', NULL),
+(8,  16, N'KH008', N'Bùi Hoàng Nam',     1, '1992-03-27T00:00:00', 0, '2025-11-19T15:45:00', 1, '2026-04-08T10:35:00', 2, N'001192889900', NULL),
+(9,  17, N'KH009', N'Ngô Khánh Ly',      0, '2002-07-14T00:00:00', 0, '2026-01-06T09:25:00', 1, '2026-04-19T12:15:00', 5, N'001202990011', NULL),
+(10, 18, N'KH010', N'Dương Việt Cường',  1, '1995-11-23T00:00:00', 0, '2026-02-20T10:05:00', 1, '2026-05-02T14:50:00', 3, N'001195001122', NULL),
+(11, 19, N'KH011', N'Lý Thanh Tùng',     1, '1993-09-02T00:00:00', 0, '2026-02-25T08:30:00', 1, '2026-05-12T09:00:00', 2, N'001193112244', NULL),
+(12, 20, N'KH012', N'Phan Huyền Nga',    0, '2000-12-18T00:00:00', 0, '2026-03-02T11:40:00', 1, '2026-05-18T16:20:00', 5, N'001200223355', NULL),
+(13, 21, N'KH013', N'Trương Quốc Huy',   1, '1991-05-09T00:00:00', 0, '2026-03-15T14:10:00', 1, '2026-06-01T10:45:00', 3, N'001191334466', NULL),
+(14, 22, N'KH014', N'Cao Thùy Dương',    0, '1999-08-21T00:00:00', 0, '2026-04-01T09:50:00', 1, '2026-06-10T13:30:00', 7, N'001199445577', NULL),
+(15, 23, N'KH015', N'Hà Trung Kiên',     1, '1997-02-03T00:00:00', 0, '2026-04-18T16:00:00', 1, '2026-06-22T08:50:00', 2, N'001197556688', NULL),
+(16, 24, N'KH016', N'Đinh Lan Anh',      0, '2003-04-27T00:00:00', 0, '2026-05-05T10:30:00', 1, '2026-07-01T15:10:00', 7, N'001203667799', NULL),
+(17, 25, N'KH017', N'Mai Gia Linh',      0, '2001-10-11T00:00:00', 0, '2026-05-22T13:15:00', 1, '2026-07-08T11:00:00', 5, N'001201778800', NULL),
+(18, 26, N'KH018', N'Tạ Đăng Khoa',      1, '1990-07-07T00:00:00', 0, '2026-06-09T08:40:00', 1, '2026-07-15T14:25:00', 3, N'001190889911', NULL),
+(19, 27, N'KH019', N'Chu Mỹ Tâm',        0, '1998-03-30T00:00:00', 0, '2026-06-28T15:20:00', 1, '2026-07-22T09:40:00', 7, N'001198990022', NULL),
+(20, 28, N'KH020', N'Đoàn Hữu Bình',     1, '1994-11-16T00:00:00', 0, '2026-07-14T09:10:00', 1, '2026-07-30T17:30:00', 2, N'001194001133', NULL);
+SET IDENTITY_INSERT dbo.khach_hang OFF;
+GO
+
+/* =========================================================================
+   5. ĐỊA CHỈ KHÁCH HÀNG
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.dia_chi_khach_hang ON;
+INSERT INTO dbo.dia_chi_khach_hang
+(id, id_khach_hang, ma, thanh_pho, quan, phuong, dia_chi_cu_the, mac_dinh, deleted) VALUES
+(1,  1,  N'DC001', N'Hà Nội',      N'Cầu Giấy',     N'Quan Hoa',      N'Số 24 ngõ 165 Cầu Giấy',         1, 0),
+(2,  1,  N'DC002', N'Hà Nội',      N'Nam Từ Liêm',  N'Mỹ Đình 1',     N'Toà S2 Vinhomes Smart City',     0, 0),
+(3,  2,  N'DC003', N'Hà Nội',      N'Hoàng Mai',    N'Định Công',     N'Số 9 ngách 12 Định Công Hạ',     1, 0),
+(4,  3,  N'DC004', N'Hồ Chí Minh', N'Quận 3',       N'Võ Thị Sáu',    N'Số 145 Nguyễn Đình Chiểu',       1, 0),
+(5,  3,  N'DC005', N'Hồ Chí Minh', N'Bình Thạnh',   N'Phường 25',     N'Toà Landmark 81, Điện Biên Phủ', 0, 0),
+(6,  4,  N'DC006', N'Hải Phòng',   N'Lê Chân',      N'Trại Cau',      N'Số 56 Tô Hiệu',                  1, 0),
+(7,  5,  N'DC007', N'Đà Nẵng',     N'Hải Châu',     N'Hoà Cường Bắc', N'Số 210 Núi Thành',               1, 0),
+(8,  6,  N'DC008', N'Hà Nội',      N'Thanh Xuân',   N'Nhân Chính',    N'Số 3 ngõ 82 Nguyễn Tuân',        1, 0),
+(9,  7,  N'DC009', N'Hồ Chí Minh', N'Quận 7',       N'Tân Phong',     N'Số 18 Nguyễn Thị Thập',          1, 0),
+(10, 8,  N'DC010', N'Cần Thơ',     N'Ninh Kiều',    N'An Khánh',      N'Số 77 Nguyễn Văn Cừ',            1, 0),
+(11, 9,  N'DC011', N'Hà Nội',      N'Long Biên',    N'Việt Hưng',     N'Số 5 ngõ 30 Ngô Gia Tự',         1, 0),
+(12, 10, N'DC012', N'Bình Dương',  N'Thủ Dầu Một',  N'Phú Hoà',       N'Số 102 Đại lộ Bình Dương',       1, 0),
+(13, 11, N'DC013', N'Hà Nội',      N'Ba Đình',      N'Ngọc Khánh',    N'Số 41 Nguyễn Chí Thanh',         1, 0),
+(14, 12, N'DC014', N'Hồ Chí Minh', N'Tân Bình',     N'Phường 4',      N'Số 89 Cộng Hoà',                 1, 0),
+(15, 13, N'DC015', N'Đà Nẵng',     N'Thanh Khê',    N'Vĩnh Trung',    N'Số 132 Điện Biên Phủ',           1, 0),
+(16, 13, N'DC016', N'Quảng Nam',   N'Hội An',       N'Cẩm Châu',      N'Số 20 Cửa Đại',                  0, 0),
+(17, 14, N'DC017', N'Hà Nội',      N'Hà Đông',      N'Văn Quán',      N'Số 7 Nguyễn Khuyến',             1, 0),
+(18, 15, N'DC018', N'Nghệ An',     N'Vinh',         N'Hưng Bình',     N'Số 33 Lê Hồng Phong',            1, 0),
+(19, 16, N'DC019', N'Hồ Chí Minh', N'Quận 10',      N'Phường 12',     N'Số 202 Ba Tháng Hai',            1, 0),
+(20, 17, N'DC020', N'Hà Nội',      N'Tây Hồ',       N'Xuân La',       N'Số 18 Võ Chí Công',              1, 0),
+(21, 18, N'DC021', N'Bắc Ninh',    N'Bắc Ninh',     N'Suối Hoa',      N'Số 55 Nguyễn Đăng Đạo',          1, 0),
+(22, 19, N'DC022', N'Khánh Hoà',   N'Nha Trang',    N'Lộc Thọ',       N'Số 96 Trần Phú',                 1, 0),
+(23, 20, N'DC023', N'Hồ Chí Minh', N'Thủ Đức',      N'Linh Trung',    N'Số 12 Võ Văn Ngân',              1, 0),
+(24, 20, N'DC024', N'Đồng Nai',    N'Biên Hoà',     N'Tân Hiệp',      N'Số 74 Phạm Văn Thuận',           0, 0);
+SET IDENTITY_INSERT dbo.dia_chi_khach_hang OFF;
+GO
+
+/* =========================================================================
+   6. CẬP NHẬT ĐỊA CHỈ MẶC ĐỊNH CHO KHÁCH HÀNG (xử lý quan hệ vòng)
+   ========================================================================= */
+UPDATE kh
+SET kh.id_dia_chi_khach_hang = dc.id
+FROM dbo.khach_hang kh
+JOIN dbo.dia_chi_khach_hang dc
+  ON dc.id_khach_hang = kh.id AND dc.mac_dinh = 1;
+GO
+
+/* =========================================================================
+   7. DANH MỤC - toàn bộ là các dòng ÁO THỂ THAO
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.danh_muc ON;
+INSERT INTO dbo.danh_muc (id, ten_danh_muc, ma_danh_muc, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1, N'Áo bóng đá',           N'DM001', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(2, N'Áo bóng rổ',           N'DM002', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(3, N'Áo cầu lông',          N'DM003', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(4, N'Áo chạy bộ',           N'DM004', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(5, N'Áo tennis',            N'DM005', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(6, N'Áo bóng chuyền',       N'DM006', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(7, N'Áo tập gym',           N'DM007', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(8, N'Áo bơi - đồ bơi',      N'DM008', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(9, N'Áo đạp xe',            N'DM009', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0),
+(10, N'Áo polo thể thao',    N'DM010', '2025-01-10T08:00:00', '2025-01-10T08:00:00', 0);
+SET IDENTITY_INSERT dbo.danh_muc OFF;
+GO
+
+/* =========================================================================
+   8. THƯƠNG HIỆU
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.thuong_hieu ON;
+INSERT INTO dbo.thuong_hieu (id, ten_thuong_hieu, ma_thuong_hieu, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1,  N'Nike',        N'TH001', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(2,  N'Adidas',      N'TH002', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(3,  N'Puma',        N'TH003', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(4,  N'Kappa',       N'TH004', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(5,  N'Mizuno',      N'TH005', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(6,  N'Kamito',      N'TH006', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(7,  N'Jogarbola',   N'TH007', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(8,  N'Grand Sport', N'TH008', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(9,  N'Yonex',       N'TH009', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(10, N'Under Armour',N'TH010', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(11, N'Li-Ning',     N'TH011', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0),
+(12, N'Decathlon',   N'TH012', '2025-01-10T08:05:00', '2025-01-10T08:05:00', 0);
+SET IDENTITY_INSERT dbo.thuong_hieu OFF;
+GO
+
+/* =========================================================================
+   9. CHẤT LIỆU
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.chat_lieu ON;
+INSERT INTO dbo.chat_lieu (id, ten_chat_lieu, ma_chat_lieu, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1, N'Polyester 100%',     N'CL001', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(2, N'Cotton 100%',        N'CL002', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(3, N'Cotton pha Spandex', N'CL003', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(4, N'Vải thun lạnh',      N'CL004', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(5, N'Vải mè cao cấp',     N'CL005', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(6, N'Vải lưới thoáng khí',N'CL006', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(7, N'Nylon Spandex',      N'CL007', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0),
+(8, N'Polyester tái chế',  N'CL008', '2025-01-10T08:10:00', '2025-01-10T08:10:00', 0);
+SET IDENTITY_INSERT dbo.chat_lieu OFF;
+GO
+
+/* =========================================================================
+   10. CÔNG NGHỆ VẢI
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.cong_nghe_vai ON;
+INSERT INTO dbo.cong_nghe_vai (id, ten_cong_nghe, ma_cong_nghe, mo_ta, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1, N'Dri-FIT',           N'CN001', N'Công nghệ thấm hút mồ hôi và làm khô nhanh của Nike',    '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(2, N'AEROREADY',         N'CN002', N'Công nghệ giữ cơ thể khô thoáng của Adidas',             '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(3, N'dryCELL',           N'CN003', N'Công nghệ thoát ẩm của Puma',                            '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(4, N'Kháng khuẩn',       N'CN004', N'Xử lý kháng khuẩn, khử mùi cho áo thể thao',             '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(5, N'Co giãn 4 chiều',   N'CN005', N'Vải co giãn 4 chiều giúp vận động thoải mái',            '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(6, N'Chống tia UV',      N'CN006', N'Lớp phủ chống tia cực tím khi vận động ngoài trời',      '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(7, N'HeatGear',          N'CN007', N'Công nghệ làm mát của Under Armour cho thời tiết nóng',  '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0),
+(8, N'AT DRY',            N'CN008', N'Công nghệ thoát ẩm nhanh của Li-Ning',                   '2025-01-10T08:15:00', '2025-01-10T08:15:00', 0);
+SET IDENTITY_INSERT dbo.cong_nghe_vai OFF;
+GO
+
+/* =========================================================================
+   11. MÔN THỂ THAO
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.mon_the_thao ON;
+INSERT INTO dbo.mon_the_thao (id, ten_mon_the_thao, ma_mon_the_thao, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1,  N'Bóng đá',      N'MTT001', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(2,  N'Bóng rổ',      N'MTT002', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(3,  N'Cầu lông',     N'MTT003', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(4,  N'Chạy bộ',      N'MTT004', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(5,  N'Tennis',       N'MTT005', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(6,  N'Bóng chuyền',  N'MTT006', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(7,  N'Gym - Fitness',N'MTT007', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(8,  N'Bơi lội',      N'MTT008', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(9,  N'Đạp xe',       N'MTT009', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0),
+(10, N'Bóng bàn',     N'MTT010', '2025-01-10T08:20:00', '2025-01-10T08:20:00', 0);
+SET IDENTITY_INSERT dbo.mon_the_thao OFF;
+GO
+
+/* =========================================================================
+   12. MÀU SẮC
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.mau_sac ON;
+INSERT INTO dbo.mau_sac (id, ten_mau_sac, ma_mau_sac, hex, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1,  N'Đen',         N'MS001', '#000000', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(2,  N'Trắng',       N'MS002', '#FFFFFF', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(3,  N'Đỏ',          N'MS003', '#E11D48', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(4,  N'Xanh dương',  N'MS004', '#2563EB', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(5,  N'Xanh lá',     N'MS005', '#16A34A', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(6,  N'Vàng',        N'MS006', '#FACC15', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(7,  N'Cam',         N'MS007', '#F97316', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(8,  N'Xám',         N'MS008', '#6B7280', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(9,  N'Tím',         N'MS009', '#7C3AED', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(10, N'Hồng',        N'MS010', '#EC4899', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(11, N'Xanh navy',   N'MS011', '#1E3A8A', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0),
+(12, N'Xanh ngọc',   N'MS012', '#14B8A6', '2025-01-10T08:25:00', '2025-01-10T08:25:00', 0);
+SET IDENTITY_INSERT dbo.mau_sac OFF;
+GO
+
+/* =========================================================================
+   13. KÍCH CỠ - chỉ dùng size áo
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.kich_co ON;
+INSERT INTO dbo.kich_co (id, ten_kich_co, ma_kich_co, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1, N'XS',   N'KC001', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(2, N'S',    N'KC002', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(3, N'M',    N'KC003', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(4, N'L',    N'KC004', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(5, N'XL',   N'KC005', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(6, N'XXL',  N'KC006', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0),
+(7, N'3XL',  N'KC007', '2025-01-10T08:30:00', '2025-01-10T08:30:00', 0);
+SET IDENTITY_INSERT dbo.kich_co OFF;
+GO
+
+/* =========================================================================
+   14. ẢNH SẢN PHẨM - toàn bộ là ảnh áo thể thao
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.anh_san_pham ON;
+INSERT INTO dbo.anh_san_pham (id, url_anh, la_anh_dai_dien, ngay_tao, ngay_cap_nhat, deleted) VALUES
+(1,  N'/images/ao-the-thao/ao-bong-da-nike-academy23.jpg',       1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(2,  N'/images/ao-the-thao/ao-bong-da-adidas-tiro24.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(3,  N'/images/ao-the-thao/ao-bong-da-kamito-aurora.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(4,  N'/images/ao-the-thao/ao-bong-da-jogarbola-classic.jpg',    1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(5,  N'/images/ao-the-thao/ao-bong-da-grandsport-league.jpg',    1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(6,  N'/images/ao-the-thao/ao-thu-mon-puma-goalkeeper.jpg',      1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(7,  N'/images/ao-the-thao/ao-bong-ro-nike-icon.jpg',            1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(8,  N'/images/ao-the-thao/ao-bong-ro-adidas-legends.jpg',       1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(9,  N'/images/ao-the-thao/ao-bong-ro-kappa-court.jpg',          1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(10, N'/images/ao-the-thao/ao-cau-long-yonex-tour.jpg',          1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(11, N'/images/ao-the-thao/ao-cau-long-lining-aeronaut.jpg',     1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(12, N'/images/ao-the-thao/ao-cau-long-kamito-smash.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(13, N'/images/ao-the-thao/ao-chay-bo-nike-miler.jpg',           1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(14, N'/images/ao-the-thao/ao-chay-bo-ua-streaker.jpg',          1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(15, N'/images/ao-the-thao/ao-chay-bo-adidas-own-the-run.jpg',   1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(16, N'/images/ao-the-thao/ao-tennis-nike-court-dri-fit.jpg',    1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(17, N'/images/ao-the-thao/ao-tennis-adidas-club.jpg',           1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(18, N'/images/ao-the-thao/ao-bong-chuyen-mizuno-attack.jpg',    1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(19, N'/images/ao-the-thao/ao-bong-chuyen-grandsport-spike.jpg', 1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(20, N'/images/ao-the-thao/ao-gym-ua-rush-compression.jpg',      1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(21, N'/images/ao-the-thao/ao-gym-nike-pro-tanktop.jpg',         1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(22, N'/images/ao-the-thao/ao-gym-puma-train-fav.jpg',           1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(23, N'/images/ao-the-thao/ao-boi-decathlon-nabaiji.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(24, N'/images/ao-the-thao/ao-boi-chong-nang-lining.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(25, N'/images/ao-the-thao/ao-dap-xe-decathlon-triban.jpg',      1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(26, N'/images/ao-the-thao/ao-dap-xe-puma-cycling.jpg',          1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(27, N'/images/ao-the-thao/ao-polo-lacoste-sport-style.jpg',     1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(28, N'/images/ao-the-thao/ao-polo-adidas-primegreen.jpg',       1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(29, N'/images/ao-the-thao/ao-bong-ban-mizuno-table.jpg',        1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(30, N'/images/ao-the-thao/ao-bong-da-mizuno-pro-jersey.jpg',    1, '2025-02-01T09:00:00', '2025-02-01T09:00:00', 0),
+(31, N'/images/ao-the-thao/ao-bong-da-nike-academy23-back.jpg',  0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(32, N'/images/ao-the-thao/ao-bong-da-adidas-tiro24-detail.jpg', 0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(33, N'/images/ao-the-thao/ao-bong-ro-nike-icon-back.jpg',       0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(34, N'/images/ao-the-thao/ao-cau-long-yonex-tour-detail.jpg',   0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(35, N'/images/ao-the-thao/ao-chay-bo-nike-miler-side.jpg',      0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(36, N'/images/ao-the-thao/ao-gym-ua-rush-detail.jpg',           0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(37, N'/images/ao-the-thao/ao-tennis-nike-court-back.jpg',       0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(38, N'/images/ao-the-thao/ao-bong-chuyen-mizuno-back.jpg',      0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(39, N'/images/ao-the-thao/ao-dap-xe-triban-back.jpg',           0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0),
+(40, N'/images/ao-the-thao/ao-polo-primegreen-detail.jpg',       0, '2025-02-01T09:05:00', '2025-02-01T09:05:00', 0);
+SET IDENTITY_INSERT dbo.anh_san_pham OFF;
+GO
+
+/* =========================================================================
+   15. SẢN PHẨM - 30 mẫu ÁO THỂ THAO cho 10 bộ môn
+   gioi_tinh: 0 = Nữ, 1 = Nam, 2 = Unisex
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.san_pham ON;
+INSERT INTO dbo.san_pham
+(id, id_danh_muc, id_thuong_hieu, ma, ten_san_pham, mo_ta_san_pham, quoc_gia_san_xuat, gioi_tinh, ngay_tao, ngay_cap_nhat, deleted, id_anh_san_pham, id_chat_lieu, id_cong_nghe_vai, id_mon_the_thao) VALUES
+(1,  1,  1,  N'SP001', N'Áo bóng đá Nike Dri-FIT Academy 23',        N'Áo bóng đá nam chất polyester thoáng khí, công nghệ Dri-FIT thấm hút mồ hôi vượt trội, form vừa vặn cho vận động cường độ cao.', N'Việt Nam',  1, '2025-02-01T09:10:00', '2026-01-05T10:00:00', 0, 1,  1, 1, 1),
+(2,  1,  2,  N'SP002', N'Áo bóng đá Adidas Tiro 24 Jersey',          N'Áo đấu Adidas Tiro 24 công nghệ AEROREADY giữ cơ thể khô ráo, ba sọc kinh điển bên tay áo, cổ bo ôm gọn.',                        N'Indonesia', 1, '2025-02-01T09:10:00', '2026-01-05T10:00:00', 0, 2,  1, 2, 1),
+(3,  1,  6,  N'SP003', N'Áo bóng đá Kamito Aurora',                  N'Áo bóng đá không logo CLB, vải mè co giãn nhẹ, giá tốt cho đội phong trào, in số và tên dễ dàng.',                                N'Việt Nam',  2, '2025-02-01T09:10:00', '2026-01-05T10:00:00', 0, 3,  5, 4, 1),
+(4,  1,  7,  N'SP004', N'Áo bóng đá Jogarbola Classic',              N'Áo đấu phong cách cổ điển, vải mè cao cấp thoáng mát, đường may chắc chắn phù hợp thi đấu sân phủi.',                              N'Việt Nam',  2, '2025-02-01T09:10:00', '2026-01-06T10:00:00', 0, 4,  5, 4, 1),
+(5,  1,  8,  N'SP005', N'Áo bóng đá Grand Sport League',             N'Áo bóng đá thi đấu chuẩn giải phong trào, chất vải nhẹ, thấm hút nhanh, có sẵn nhiều màu cho cả đội.',                             N'Thái Lan',  2, '2025-02-02T09:10:00', '2026-01-06T10:00:00', 0, 5,  1, 4, 1),
+(6,  1,  3,  N'SP006', N'Áo thủ môn Puma Goalkeeper Pro',            N'Áo thủ môn dài tay, có đệm mút mỏng ở khuỷu tay, công nghệ dryCELL thoát ẩm, form rộng thoải mái khi đổ người.',                    N'Việt Nam',  2, '2025-02-03T09:10:00', '2026-01-10T10:00:00', 0, 6,  1, 3, 1),
+(7,  1,  5,  N'SP007', N'Áo bóng đá Mizuno Pro Jersey',              N'Áo đấu cao cấp của Mizuno, vải siêu nhẹ, cổ tròn co giãn, thiết kế tối giản chuẩn Nhật Bản.',                                     N'Nhật Bản',  1, '2025-02-04T09:10:00', '2026-01-12T10:00:00', 0, 30, 8, 5, 1),
+(8,  2,  1,  N'SP008', N'Áo bóng rổ Nike Icon Jersey',               N'Áo ba lỗ bóng rổ, nách khoét rộng thoải mái vung tay, vải lưới hai lớp thoáng khí, form suông chuẩn sân bóng.',                    N'Việt Nam',  2, '2025-02-05T09:10:00', '2026-01-15T10:00:00', 0, 7,  6, 1, 2),
+(9,  2,  2,  N'SP009', N'Áo bóng rổ Adidas Legends Tank',            N'Áo bóng rổ tank top form rộng, công nghệ AEROREADY, logo in cao su nổi bền màu sau nhiều lần giặt.',                               N'Campuchia', 2, '2025-02-05T09:10:00', '2026-01-15T10:00:00', 0, 8,  6, 2, 2),
+(10, 2,  4,  N'SP010', N'Áo bóng rổ Kappa Court Vest',               N'Áo bóng rổ vải thun lạnh mát, co giãn tốt, phối màu tương phản nổi bật, phù hợp giải phong trào.',                                N'Việt Nam',  2, '2025-02-06T09:10:00', '2026-01-18T10:00:00', 0, 9,  4, 5, 2),
+(11, 3,  9,  N'SP011', N'Áo cầu lông Yonex Tour Elite',              N'Áo cầu lông chính hãng Yonex, vải siêu nhẹ thoát ẩm nhanh, thiết kế đường cắt tinh tế giúp vung vợt tự do.',                       N'Đài Loan',  1, '2025-02-07T09:10:00', '2026-01-20T10:00:00', 0, 10, 1, 5, 3),
+(12, 3,  11, N'SP012', N'Áo cầu lông Li-Ning AeroNaut',              N'Áo cầu lông công nghệ AT DRY thoát ẩm cực nhanh, phần lưng có dải lưới tăng thông thoáng.',                                       N'Trung Quốc',2, '2025-02-07T09:10:00', '2026-01-20T10:00:00', 0, 11, 1, 8, 3),
+(13, 3,  6,  N'SP013', N'Áo cầu lông Kamito Smash',                  N'Áo cầu lông giá tốt cho người chơi phong trào, vải mè nhẹ, thấm hút ổn, nhiều màu tươi sáng.',                                    N'Việt Nam',  2, '2025-02-08T09:10:00', '2026-01-22T10:00:00', 0, 12, 5, 4, 3),
+(14, 3,  9,  N'SP014', N'Áo cầu lông Yonex Lady Fit',                N'Áo cầu lông nữ dáng ôm nhẹ, cổ tim thanh lịch, chất vải co giãn 4 chiều thoải mái khi di chuyển.',                                N'Đài Loan',  0, '2025-02-08T09:10:00', '2026-01-22T10:00:00', 0, 10, 7, 5, 3),
+(15, 4,  1,  N'SP015', N'Áo chạy bộ Nike Miler',                     N'Áo chạy bộ tay ngắn siêu nhẹ, có dải phản quang phía sau tăng an toàn khi chạy tối, Dri-FIT khô nhanh.',                          N'Việt Nam',  1, '2025-02-09T09:10:00', '2026-01-25T10:00:00', 0, 13, 1, 1, 4),
+(16, 4,  10, N'SP016', N'Áo chạy bộ Under Armour Streaker',          N'Áo chạy bộ công nghệ HeatGear làm mát, vải mỏng nhẹ gần như không cảm nhận trọng lượng.',                                         N'Việt Nam',  2, '2025-02-09T09:10:00', '2026-01-25T10:00:00', 0, 14, 8, 7, 4),
+(17, 4,  2,  N'SP017', N'Áo chạy bộ Adidas Own The Run',             N'Áo chạy bộ AEROREADY, thiết kế đường may phẳng hạn chế cọ xát khi chạy đường dài.',                                               N'Indonesia', 2, '2025-02-10T09:10:00', '2026-01-28T10:00:00', 0, 15, 8, 2, 4),
+(18, 4,  10, N'SP018', N'Áo chạy bộ nữ Under Armour Tech Tee',       N'Áo chạy bộ nữ form suông nhẹ, vải mềm mịn không xù, thoáng khí và nhanh khô sau buổi tập.',                                       N'Việt Nam',  0, '2025-02-10T09:10:00', '2026-01-28T10:00:00', 0, 14, 8, 7, 4),
+(19, 5,  1,  N'SP019', N'Áo tennis Nike Court Dri-FIT',              N'Áo tennis cổ bẻ, vải Dri-FIT co giãn, phần vai được thiết kế riêng cho động tác giao bóng.',                                      N'Việt Nam',  1, '2025-02-11T09:10:00', '2026-02-01T10:00:00', 0, 16, 1, 1, 5),
+(20, 5,  2,  N'SP020', N'Áo tennis Adidas Club Polo',                N'Áo polo tennis chất liệu tái chế thân thiện môi trường, cổ áo giữ form tốt sau nhiều lần giặt.',                                  N'Campuchia', 2, '2025-02-11T09:10:00', '2026-02-01T10:00:00', 0, 17, 8, 2, 5),
+(21, 6,  5,  N'SP021', N'Áo bóng chuyền Mizuno Attack',              N'Áo bóng chuyền thi đấu, phần vai và nách gia cố chắc chắn, co giãn tốt khi bật nhảy đập bóng.',                                   N'Nhật Bản',  2, '2025-02-12T09:10:00', '2026-02-05T10:00:00', 0, 18, 1, 5, 6),
+(22, 6,  8,  N'SP022', N'Áo bóng chuyền Grand Sport Spike',          N'Áo bóng chuyền phong trào, vải thoáng mát, in số áo rõ nét, giá hợp lý cho cả đội.',                                              N'Thái Lan',  2, '2025-02-12T09:10:00', '2026-02-05T10:00:00', 0, 19, 1, 4, 6),
+(23, 7,  10, N'SP023', N'Áo gym Under Armour Rush Compression',      N'Áo body giữ nhiệt ôm sát, hỗ trợ cơ bắp trong lúc tập tạ, công nghệ HeatGear thoát nhiệt hiệu quả.',                              N'Việt Nam',  1, '2025-02-13T09:10:00', '2026-02-10T10:00:00', 0, 20, 7, 7, 7),
+(24, 7,  1,  N'SP024', N'Áo tank top gym Nike Pro',                  N'Áo ba lỗ tập gym, nách khoét sâu khoe cơ vai, vải co giãn 4 chiều theo mọi chuyển động.',                                         N'Việt Nam',  1, '2025-02-13T09:10:00', '2026-02-10T10:00:00', 0, 21, 3, 5, 7),
+(25, 7,  3,  N'SP025', N'Áo tập gym Puma Train Favourite',           N'Áo tập tay ngắn công nghệ dryCELL, form regular dễ mặc, phù hợp cả tập gym lẫn mặc thường ngày.',                                 N'Việt Nam',  2, '2025-02-14T09:10:00', '2026-02-12T10:00:00', 0, 22, 8, 3, 7),
+(26, 7,  10, N'SP026', N'Áo bra tập gym nữ Under Armour',            N'Áo bra thể thao nữ nâng đỡ mức trung bình, dây lưng bản to không hằn da, thoáng khí khi tập cường độ cao.',                        N'Việt Nam',  0, '2025-02-14T09:10:00', '2026-02-12T10:00:00', 0, 20, 7, 7, 7),
+(27, 8,  12, N'SP027', N'Áo bơi Decathlon Nabaiji',                  N'Áo bơi bó sát chống clo, giữ form tốt sau nhiều lần xuống hồ, đường may phẳng không cọ da.',                                     N'Việt Nam',  2, '2025-02-15T09:10:00', '2026-02-15T10:00:00', 0, 23, 7, 6, 8),
+(28, 8,  11, N'SP028', N'Áo bơi chống nắng Li-Ning UV Guard',        N'Áo bơi dài tay chống tia UV, thích hợp bơi ngoài trời và các hoạt động dưới nước ban ngày.',                                      N'Trung Quốc',2, '2025-02-15T09:10:00', '2026-02-15T10:00:00', 0, 24, 7, 6, 8),
+(29, 9,  12, N'SP029', N'Áo đạp xe Decathlon Triban',                N'Áo đạp xe có ba túi sau lưng đựng đồ, khoá kéo dài, ôm nhẹ giảm cản gió khi đạp tốc độ.',                                         N'Việt Nam',  2, '2025-02-16T09:10:00', '2026-02-18T10:00:00', 0, 25, 1, 5, 9),
+(30, 10, 2,  N'SP030', N'Áo polo thể thao Adidas Primegreen',        N'Áo polo thể thao từ sợi tái chế, cổ bẻ lịch sự, mặc đi tập lẫn đi chơi đều hợp.',                                                 N'Indonesia', 2, '2025-02-17T09:10:00', '2026-02-20T10:00:00', 0, 28, 8, 2, 10);
+SET IDENTITY_INSERT dbo.san_pham OFF;
+GO
+
+/* =========================================================================
+   16. CHI TIẾT SẢN PHẨM - 90 biến thể (màu + size)
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.chi_tiet_san_pham ON;
+INSERT INTO dbo.chi_tiet_san_pham
+(id, id_mau_sac, id_kich_co, id_san_pham, ma, so_luong_ton_kho, mo_ta_chi_tiet, gia_nhap, gia_ban, ngay_nhap, ngay_tao, ngay_cap_nhat, deleted, id_anh_san_pham) VALUES
+(1,  1,  3, 1,  N'CTSP001', 50, N'Áo bóng đá Nike Academy 23 - Đen - M',        450000.00,  790000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 1),
+(2,  1,  4, 1,  N'CTSP002', 45, N'Áo bóng đá Nike Academy 23 - Đen - L',        450000.00,  790000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 1),
+(3,  2,  3, 1,  N'CTSP003', 30, N'Áo bóng đá Nike Academy 23 - Trắng - M',      450000.00,  790000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 31),
+(4,  3,  4, 1,  N'CTSP004', 25, N'Áo bóng đá Nike Academy 23 - Đỏ - L',         450000.00,  790000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 1),
+(5,  4,  5, 1,  N'CTSP005', 22, N'Áo bóng đá Nike Academy 23 - Xanh - XL',      450000.00,  790000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 1),
+(6,  4,  3, 2,  N'CTSP006', 40, N'Áo bóng đá Adidas Tiro 24 - Xanh - M',        520000.00,  890000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 2),
+(7,  4,  4, 2,  N'CTSP007', 38, N'Áo bóng đá Adidas Tiro 24 - Xanh - L',        520000.00,  890000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 2),
+(8,  2,  5, 2,  N'CTSP008', 20, N'Áo bóng đá Adidas Tiro 24 - Trắng - XL',      520000.00,  890000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 32),
+(9,  1,  6, 2,  N'CTSP009', 15, N'Áo bóng đá Adidas Tiro 24 - Đen - XXL',       520000.00,  890000.00, '2025-02-02T08:00:00', '2025-02-02T08:00:00', '2026-01-05T10:00:00', 0, 2),
+(10, 3,  3, 3,  N'CTSP010', 80, N'Áo bóng đá Kamito Aurora - Đỏ - M',           180000.00,  329000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-05T10:00:00', 0, 3),
+(11, 5,  4, 3,  N'CTSP011', 75, N'Áo bóng đá Kamito Aurora - Xanh lá - L',      180000.00,  329000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-05T10:00:00', 0, 3),
+(12, 1,  5, 3,  N'CTSP012', 60, N'Áo bóng đá Kamito Aurora - Đen - XL',         180000.00,  329000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-05T10:00:00', 0, 3),
+(13, 6,  4, 3,  N'CTSP013', 55, N'Áo bóng đá Kamito Aurora - Vàng - L',         180000.00,  329000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-05T10:00:00', 0, 3),
+(14, 11, 3, 4,  N'CTSP014', 48, N'Áo bóng đá Jogarbola Classic - Navy - M',     210000.00,  389000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-06T10:00:00', 0, 4),
+(15, 11, 4, 4,  N'CTSP015', 44, N'Áo bóng đá Jogarbola Classic - Navy - L',     210000.00,  389000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-06T10:00:00', 0, 4),
+(16, 3,  5, 4,  N'CTSP016', 33, N'Áo bóng đá Jogarbola Classic - Đỏ - XL',      210000.00,  389000.00, '2025-02-03T08:00:00', '2025-02-03T08:00:00', '2026-01-06T10:00:00', 0, 4),
+(17, 7,  3, 5,  N'CTSP017', 62, N'Áo bóng đá Grand Sport League - Cam - M',     160000.00,  299000.00, '2025-02-04T08:00:00', '2025-02-04T08:00:00', '2026-01-06T10:00:00', 0, 5),
+(18, 7,  4, 5,  N'CTSP018', 58, N'Áo bóng đá Grand Sport League - Cam - L',     160000.00,  299000.00, '2025-02-04T08:00:00', '2025-02-04T08:00:00', '2026-01-06T10:00:00', 0, 5),
+(19, 12, 4, 5,  N'CTSP019', 40, N'Áo bóng đá Grand Sport League - Ngọc - L',    160000.00,  299000.00, '2025-02-04T08:00:00', '2025-02-04T08:00:00', '2026-01-06T10:00:00', 0, 5),
+(20, 5,  4, 6,  N'CTSP020', 26, N'Áo thủ môn Puma GK Pro - Xanh lá - L',        420000.00,  759000.00, '2025-02-05T08:00:00', '2025-02-05T08:00:00', '2026-01-10T10:00:00', 0, 6),
+(21, 1,  5, 6,  N'CTSP021', 21, N'Áo thủ môn Puma GK Pro - Đen - XL',           420000.00,  759000.00, '2025-02-05T08:00:00', '2025-02-05T08:00:00', '2026-01-10T10:00:00', 0, 6),
+(22, 9,  4, 6,  N'CTSP022', 14, N'Áo thủ môn Puma GK Pro - Tím - L',            420000.00,  759000.00, '2025-02-05T08:00:00', '2025-02-05T08:00:00', '2026-01-10T10:00:00', 0, 6),
+(23, 2,  3, 7,  N'CTSP023', 28, N'Áo bóng đá Mizuno Pro - Trắng - M',           560000.00,  990000.00, '2025-02-06T08:00:00', '2025-02-06T08:00:00', '2026-01-12T10:00:00', 0, 30),
+(24, 11, 4, 7,  N'CTSP024', 24, N'Áo bóng đá Mizuno Pro - Navy - L',            560000.00,  990000.00, '2025-02-06T08:00:00', '2025-02-06T08:00:00', '2026-01-12T10:00:00', 0, 30),
+(25, 1,  5, 7,  N'CTSP025', 19, N'Áo bóng đá Mizuno Pro - Đen - XL',            560000.00,  990000.00, '2025-02-06T08:00:00', '2025-02-06T08:00:00', '2026-01-12T10:00:00', 0, 30),
+(26, 1,  4, 8,  N'CTSP026', 36, N'Áo bóng rổ Nike Icon - Đen - L',              390000.00,  690000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 7),
+(27, 3,  4, 8,  N'CTSP027', 32, N'Áo bóng rổ Nike Icon - Đỏ - L',               390000.00,  690000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 33),
+(28, 2,  5, 8,  N'CTSP028', 27, N'Áo bóng rổ Nike Icon - Trắng - XL',           390000.00,  690000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 7),
+(29, 4,  6, 8,  N'CTSP029', 18, N'Áo bóng rổ Nike Icon - Xanh - XXL',           390000.00,  690000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 7),
+(30, 11, 4, 9,  N'CTSP030', 34, N'Áo bóng rổ Adidas Legends - Navy - L',        340000.00,  629000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 8),
+(31, 6,  5, 9,  N'CTSP031', 29, N'Áo bóng rổ Adidas Legends - Vàng - XL',       340000.00,  629000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 8),
+(32, 1,  6, 9,  N'CTSP032', 17, N'Áo bóng rổ Adidas Legends - Đen - XXL',       340000.00,  629000.00, '2025-02-07T08:00:00', '2025-02-07T08:00:00', '2026-01-15T10:00:00', 0, 8),
+(33, 9,  4, 10, N'CTSP033', 33, N'Áo bóng rổ Kappa Court - Tím - L',            300000.00,  549000.00, '2025-02-08T08:00:00', '2025-02-08T08:00:00', '2026-01-18T10:00:00', 0, 9),
+(34, 6,  5, 10, N'CTSP034', 29, N'Áo bóng rổ Kappa Court - Vàng - XL',          300000.00,  549000.00, '2025-02-08T08:00:00', '2025-02-08T08:00:00', '2026-01-18T10:00:00', 0, 9),
+(35, 1,  6, 10, N'CTSP035', 18, N'Áo bóng rổ Kappa Court - Đen - XXL',          300000.00,  549000.00, '2025-02-08T08:00:00', '2025-02-08T08:00:00', '2026-01-18T10:00:00', 0, 9),
+(36, 2,  3, 11, N'CTSP036', 42, N'Áo cầu lông Yonex Tour - Trắng - M',          480000.00,  859000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 10),
+(37, 2,  4, 11, N'CTSP037', 38, N'Áo cầu lông Yonex Tour - Trắng - L',          480000.00,  859000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 34),
+(38, 11, 4, 11, N'CTSP038', 31, N'Áo cầu lông Yonex Tour - Navy - L',           480000.00,  859000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 10),
+(39, 3,  5, 11, N'CTSP039', 23, N'Áo cầu lông Yonex Tour - Đỏ - XL',            480000.00,  859000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 10),
+(40, 3,  3, 12, N'CTSP040', 36, N'Áo cầu lông Li-Ning AeroNaut - Đỏ - M',       350000.00,  649000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 11),
+(41, 1,  4, 12, N'CTSP041', 34, N'Áo cầu lông Li-Ning AeroNaut - Đen - L',      350000.00,  649000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 11),
+(42, 12, 5, 12, N'CTSP042', 25, N'Áo cầu lông Li-Ning AeroNaut - Ngọc - XL',    350000.00,  649000.00, '2025-02-09T08:00:00', '2025-02-09T08:00:00', '2026-01-20T10:00:00', 0, 11),
+(43, 6,  3, 13, N'CTSP043', 70, N'Áo cầu lông Kamito Smash - Vàng - M',         150000.00,  279000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 12),
+(44, 12, 4, 13, N'CTSP044', 65, N'Áo cầu lông Kamito Smash - Ngọc - L',         150000.00,  279000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 12),
+(45, 4,  5, 13, N'CTSP045', 52, N'Áo cầu lông Kamito Smash - Xanh - XL',        150000.00,  279000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 12),
+(46, 10, 2, 14, N'CTSP046', 40, N'Áo cầu lông Yonex Lady Fit - Hồng - S',       420000.00,  769000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 10),
+(47, 10, 3, 14, N'CTSP047', 37, N'Áo cầu lông Yonex Lady Fit - Hồng - M',       420000.00,  769000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 10),
+(48, 2,  3, 14, N'CTSP048', 30, N'Áo cầu lông Yonex Lady Fit - Trắng - M',      420000.00,  769000.00, '2025-02-10T08:00:00', '2025-02-10T08:00:00', '2026-01-22T10:00:00', 0, 10),
+(49, 1,  3, 15, N'CTSP049', 55, N'Áo chạy bộ Nike Miler - Đen - M',             320000.00,  590000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 13),
+(50, 1,  4, 15, N'CTSP050', 50, N'Áo chạy bộ Nike Miler - Đen - L',             320000.00,  590000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 35),
+(51, 8,  4, 15, N'CTSP051', 43, N'Áo chạy bộ Nike Miler - Xám - L',             320000.00,  590000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 13),
+(52, 12, 5, 15, N'CTSP052', 31, N'Áo chạy bộ Nike Miler - Ngọc - XL',           320000.00,  590000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 13),
+(53, 1,  3, 16, N'CTSP053', 44, N'Áo chạy bộ UA Streaker - Đen - M',            380000.00,  699000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 14),
+(54, 7,  4, 16, N'CTSP054', 39, N'Áo chạy bộ UA Streaker - Cam - L',            380000.00,  699000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 14),
+(55, 8,  5, 16, N'CTSP055', 28, N'Áo chạy bộ UA Streaker - Xám - XL',           380000.00,  699000.00, '2025-02-11T08:00:00', '2025-02-11T08:00:00', '2026-01-25T10:00:00', 0, 14),
+(56, 11, 3, 17, N'CTSP056', 41, N'Áo chạy bộ Adidas Own The Run - Navy - M',    300000.00,  559000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 15),
+(57, 11, 4, 17, N'CTSP057', 36, N'Áo chạy bộ Adidas Own The Run - Navy - L',    300000.00,  559000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 15),
+(58, 2,  5, 17, N'CTSP058', 27, N'Áo chạy bộ Adidas Own The Run - Trắng - XL',  300000.00,  559000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 15),
+(59, 10, 2, 18, N'CTSP059', 38, N'Áo chạy bộ nữ UA Tech Tee - Hồng - S',        280000.00,  529000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 14),
+(60, 9,  3, 18, N'CTSP060', 35, N'Áo chạy bộ nữ UA Tech Tee - Tím - M',         280000.00,  529000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 14),
+(61, 1,  3, 18, N'CTSP061', 30, N'Áo chạy bộ nữ UA Tech Tee - Đen - M',         280000.00,  529000.00, '2025-02-12T08:00:00', '2025-02-12T08:00:00', '2026-01-28T10:00:00', 0, 14),
+(62, 2,  3, 19, N'CTSP062', 32, N'Áo tennis Nike Court - Trắng - M',            430000.00,  789000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 16),
+(63, 2,  4, 19, N'CTSP063', 29, N'Áo tennis Nike Court - Trắng - L',            430000.00,  789000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 37),
+(64, 11, 4, 19, N'CTSP064', 24, N'Áo tennis Nike Court - Navy - L',             430000.00,  789000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 16),
+(65, 12, 3, 20, N'CTSP065', 30, N'Áo tennis Adidas Club Polo - Ngọc - M',       360000.00,  669000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 17),
+(66, 2,  4, 20, N'CTSP066', 27, N'Áo tennis Adidas Club Polo - Trắng - L',      360000.00,  669000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 17),
+(67, 1,  5, 20, N'CTSP067', 21, N'Áo tennis Adidas Club Polo - Đen - XL',       360000.00,  669000.00, '2025-02-13T08:00:00', '2025-02-13T08:00:00', '2026-02-01T10:00:00', 0, 17),
+(68, 3,  4, 21, N'CTSP068', 34, N'Áo bóng chuyền Mizuno Attack - Đỏ - L',       340000.00,  629000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 18),
+(69, 4,  4, 21, N'CTSP069', 31, N'Áo bóng chuyền Mizuno Attack - Xanh - L',     340000.00,  629000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 38),
+(70, 1,  5, 21, N'CTSP070', 23, N'Áo bóng chuyền Mizuno Attack - Đen - XL',     340000.00,  629000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 18),
+(71, 6,  4, 22, N'CTSP071', 46, N'Áo bóng chuyền GS Spike - Vàng - L',          170000.00,  319000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 19),
+(72, 5,  4, 22, N'CTSP072', 42, N'Áo bóng chuyền GS Spike - Xanh lá - L',       170000.00,  319000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 19),
+(73, 7,  5, 22, N'CTSP073', 33, N'Áo bóng chuyền GS Spike - Cam - XL',          170000.00,  319000.00, '2025-02-14T08:00:00', '2025-02-14T08:00:00', '2026-02-05T10:00:00', 0, 19),
+(74, 1,  3, 23, N'CTSP074', 40, N'Áo gym UA Rush - Đen - M',                    450000.00,  849000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 20),
+(75, 1,  4, 23, N'CTSP075', 36, N'Áo gym UA Rush - Đen - L',                    450000.00,  849000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 36),
+(76, 11, 4, 23, N'CTSP076', 28, N'Áo gym UA Rush - Navy - L',                   450000.00,  849000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 20),
+(77, 1,  3, 24, N'CTSP077', 52, N'Áo tank top gym Nike Pro - Đen - M',          240000.00,  449000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 21),
+(78, 8,  4, 24, N'CTSP078', 47, N'Áo tank top gym Nike Pro - Xám - L',          240000.00,  449000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 21),
+(79, 2,  5, 24, N'CTSP079', 35, N'Áo tank top gym Nike Pro - Trắng - XL',       240000.00,  449000.00, '2025-02-15T08:00:00', '2025-02-15T08:00:00', '2026-02-10T10:00:00', 0, 21),
+(80, 8,  4, 25, N'CTSP080', 44, N'Áo tập gym Puma Train - Xám - L',             210000.00,  399000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 22),
+(81, 5,  4, 25, N'CTSP081', 39, N'Áo tập gym Puma Train - Xanh lá - L',         210000.00,  399000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 22),
+(82, 1,  5, 25, N'CTSP082', 30, N'Áo tập gym Puma Train - Đen - XL',            210000.00,  399000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 22),
+(83, 1,  2, 26, N'CTSP083', 42, N'Áo bra gym nữ UA - Đen - S',                  260000.00,  489000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 20),
+(84, 10, 3, 26, N'CTSP084', 38, N'Áo bra gym nữ UA - Hồng - M',                 260000.00,  489000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 20),
+(85, 12, 3, 26, N'CTSP085', 26, N'Áo bra gym nữ UA - Ngọc - M',                 260000.00,  489000.00, '2025-02-16T08:00:00', '2025-02-16T08:00:00', '2026-02-12T10:00:00', 0, 20),
+(86, 4,  4, 27, N'CTSP086', 34, N'Áo bơi Decathlon Nabaiji - Xanh - L',         190000.00,  359000.00, '2025-02-17T08:00:00', '2025-02-17T08:00:00', '2026-02-15T10:00:00', 0, 23),
+(87, 1,  5, 27, N'CTSP087', 27, N'Áo bơi Decathlon Nabaiji - Đen - XL',         190000.00,  359000.00, '2025-02-17T08:00:00', '2025-02-17T08:00:00', '2026-02-15T10:00:00', 0, 23),
+(88, 11, 4, 28, N'CTSP088', 25, N'Áo bơi chống nắng Li-Ning - Navy - L',        280000.00,  519000.00, '2025-02-17T08:00:00', '2025-02-17T08:00:00', '2026-02-15T10:00:00', 0, 24),
+(89, 12, 4, 29, N'CTSP089', 22, N'Áo đạp xe Decathlon Triban - Ngọc - L',       330000.00,  619000.00, '2025-02-18T08:00:00', '2025-02-18T08:00:00', '2026-02-18T10:00:00', 0, 25),
+(90, 2,  4, 30, N'CTSP090', 40, N'Áo polo Adidas Primegreen - Trắng - L',       290000.00,  539000.00, '2025-02-19T08:00:00', '2025-02-19T08:00:00', '2026-02-20T10:00:00', 0, 28);
+SET IDENTITY_INSERT dbo.chi_tiet_san_pham OFF;
+GO
+
+/* =========================================================================
+   17. ĐỢT GIẢM GIÁ
+   loai_giam_gia_ap_dung: PHAN_TRAM | TIEN_MAT
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.dot_giam_gia ON;
+INSERT INTO dbo.dot_giam_gia
+(id, ma, ten_dot_giam_gia, loai_giam_gia_ap_dung, gia_tri_giam_gia, so_tien_giam_toi_da, ngay_bat_dau, ngay_ket_thuc, trang_thai, deleted) VALUES
+(1, N'DGG001', N'Giảm giá hè 2026 - Áo bóng đá',   N'PHAN_TRAM', 20.00,    200000.00, '2026-06-01', '2026-08-31', 1, 0),
+(2, N'DGG002', N'Black Friday 2026',               N'PHAN_TRAM', 30.00,    500000.00, '2026-11-25', '2026-11-30', 0, 0),
+(3, N'DGG003', N'Xả kho áo cầu lông',              N'PHAN_TRAM', 15.00,    150000.00, '2026-07-01', '2026-07-31', 1, 0),
+(4, N'DGG004', N'Ưu đãi áo gym tháng 5',           N'TIEN_MAT',  50000.00,  50000.00, '2026-05-01', '2026-05-31', 0, 0),
+(5, N'DGG005', N'Tuần lễ áo chạy bộ',              N'PHAN_TRAM', 25.00,    200000.00, '2026-08-01', '2026-08-15', 1, 0),
+(6, N'DGG006', N'Khai trương - Áo bóng rổ',        N'TIEN_MAT',  80000.00,  80000.00, '2026-03-01', '2026-03-31', 0, 0);
+SET IDENTITY_INSERT dbo.dot_giam_gia OFF;
+GO
+
+/* =========================================================================
+   18. CHI TIẾT ĐỢT GIẢM GIÁ
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.chi_tiet_dot_giam_gia ON;
+INSERT INTO dbo.chi_tiet_dot_giam_gia
+(id, id_dot_giam_gia, id_chi_tiet_sp, ma, gia_ban_dau, gia_sau_khi_giam, deleted) VALUES
+(1,  1, 1,  N'CTDGG001', 790000.00, 632000.00, 0),
+(2,  1, 2,  N'CTDGG002', 790000.00, 632000.00, 0),
+(3,  1, 3,  N'CTDGG003', 790000.00, 632000.00, 0),
+(4,  1, 6,  N'CTDGG004', 890000.00, 712000.00, 0),
+(5,  1, 7,  N'CTDGG005', 890000.00, 712000.00, 0),
+(6,  1, 10, N'CTDGG006', 329000.00, 263200.00, 0),
+(7,  1, 11, N'CTDGG007', 329000.00, 263200.00, 0),
+(8,  1, 23, N'CTDGG008', 990000.00, 792000.00, 0),
+(9,  3, 36, N'CTDGG009', 859000.00, 730150.00, 0),
+(10, 3, 37, N'CTDGG010', 859000.00, 730150.00, 0),
+(11, 3, 40, N'CTDGG011', 649000.00, 551650.00, 0),
+(12, 3, 43, N'CTDGG012', 279000.00, 237150.00, 0),
+(13, 3, 44, N'CTDGG013', 279000.00, 237150.00, 0),
+(14, 4, 77, N'CTDGG014', 449000.00, 399000.00, 0),
+(15, 4, 78, N'CTDGG015', 449000.00, 399000.00, 0),
+(16, 4, 80, N'CTDGG016', 399000.00, 349000.00, 0),
+(17, 5, 49, N'CTDGG017', 590000.00, 442500.00, 0),
+(18, 5, 50, N'CTDGG018', 590000.00, 442500.00, 0),
+(19, 5, 53, N'CTDGG019', 699000.00, 524250.00, 0),
+(20, 5, 56, N'CTDGG020', 559000.00, 419250.00, 0),
+(21, 6, 26, N'CTDGG021', 690000.00, 610000.00, 0),
+(22, 6, 30, N'CTDGG022', 629000.00, 549000.00, 0),
+(23, 6, 33, N'CTDGG023', 549000.00, 469000.00, 0);
+SET IDENTITY_INSERT dbo.chi_tiet_dot_giam_gia OFF;
+GO
+
+/* =========================================================================
+   19. PHIẾU GIẢM GIÁ
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.phieu_giam_gia ON;
+INSERT INTO dbo.phieu_giam_gia
+(id, ma, ten_phieu_giam_gia, loai_phieu_giam_gia, phan_tram_giam_gia, so_tien_giam_toi_da, hoa_don_toi_thieu, so_luong_dung, ngay_bat_dau, ngay_ket_thuc, trang_thai, rieng_tu, mo_ta, deleted) VALUES
+(1, N'WELCOME10',   N'Chào mừng khách hàng mới',     N'PHAN_TRAM', 10, 100000, 500000,  100, '2026-01-01T00:00:00', '2026-12-31T23:59:59', 1, 0, N'Giảm 10% cho đơn hàng đầu tiên, tối đa 100.000đ', 0),
+(2, N'SALE200K',    N'Giảm 200K cho đơn lớn',        N'TIEN_MAT',   0, 200000, 2000000,  50, '2026-03-01T00:00:00', '2026-09-30T23:59:59', 1, 0, N'Giảm ngay 200.000đ cho đơn từ 2 triệu',           0),
+(3, N'FREESHIP100', N'Hỗ trợ phí vận chuyển',        N'TIEN_MAT',   0, 100000,  800000, 200, '2026-02-01T00:00:00', '2026-12-31T23:59:59', 1, 0, N'Hỗ trợ tối đa 100.000đ phí vận chuyển',           0),
+(4, N'SUMMER10',    N'Ưu đãi hè 2026',               N'PHAN_TRAM', 10, 150000, 1000000, 150, '2026-06-01T00:00:00', '2026-08-31T23:59:59', 1, 0, N'Giảm 10% mùa hè, tối đa 150.000đ',                0),
+(5, N'VIP100K',     N'Ưu đãi khách hàng thân thiết', N'TIEN_MAT',   0, 100000,  500000,  30, '2026-01-15T00:00:00', '2026-12-31T23:59:59', 1, 1, N'Phiếu riêng tư cho khách hàng thân thiết',        0),
+(6, N'NEWYEAR15',   N'Mừng năm mới 2026',            N'PHAN_TRAM', 15, 300000, 1500000,   0, '2026-01-01T00:00:00', '2026-02-15T23:59:59', 0, 0, N'Chương trình đã kết thúc',                        0),
+(7, N'AOTHETHAO50', N'Giảm 50K mọi áo thể thao',     N'TIEN_MAT',   0,  50000,  300000, 300, '2026-04-01T00:00:00', '2026-12-31T23:59:59', 1, 0, N'Giảm 50.000đ cho đơn áo thể thao từ 300.000đ',    0),
+(8, N'TEAM20',      N'Ưu đãi mua áo theo đội',       N'PHAN_TRAM', 20, 400000, 3000000,  40, '2026-05-01T00:00:00', '2026-12-31T23:59:59', 1, 0, N'Giảm 20% khi mua áo số lượng lớn cho cả đội',     0),
+(9, N'GYMFIT80',    N'Ưu đãi áo tập gym',            N'TIEN_MAT',   0,  80000,  600000,  80, '2026-06-01T00:00:00', '2026-10-31T23:59:59', 1, 0, N'Giảm 80.000đ cho đơn áo gym từ 600.000đ',         0),
+(10,N'BIRTHDAY15',  N'Quà sinh nhật khách hàng',     N'PHAN_TRAM', 15, 200000,  500000,  60, '2026-01-01T00:00:00', '2026-12-31T23:59:59', 1, 1, N'Phiếu riêng tư tặng dịp sinh nhật khách hàng',    0);
+SET IDENTITY_INSERT dbo.phieu_giam_gia OFF;
+GO
+
+/* =========================================================================
+   20. PHIẾU GIẢM GIÁ CÁ NHÂN
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.phieu_giam_gia_ca_nhan ON;
+INSERT INTO dbo.phieu_giam_gia_ca_nhan
+(id, id_phieu_giam_gia, id_khach_hang, ma, ngay_nhan, ngay_het_han, trang_thai, deleted) VALUES
+(1,  5,  1,  N'PGGCN001', '2026-01-15T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(2,  5,  2,  N'PGGCN002', '2026-01-15T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(3,  5,  3,  N'PGGCN003', '2026-01-15T09:00:00', '2026-12-31T23:59:59', 0, 0),
+(4,  5,  4,  N'PGGCN004', '2026-02-01T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(5,  5,  6,  N'PGGCN005', '2026-02-01T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(6,  1,  9,  N'PGGCN006', '2026-01-06T09:30:00', '2026-12-31T23:59:59', 1, 0),
+(7,  1,  10, N'PGGCN007', '2026-02-20T10:10:00', '2026-12-31T23:59:59', 1, 0),
+(8,  2,  8,  N'PGGCN008', '2026-03-01T08:00:00', '2026-09-30T23:59:59', 1, 0),
+(9,  10, 11, N'PGGCN009', '2026-03-05T08:00:00', '2026-12-31T23:59:59', 1, 0),
+(10, 10, 13, N'PGGCN010', '2026-03-20T08:00:00', '2026-12-31T23:59:59', 1, 0),
+(11, 5,  15, N'PGGCN011', '2026-04-20T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(12, 1,  16, N'PGGCN012', '2026-05-05T10:35:00', '2026-12-31T23:59:59', 1, 0),
+(13, 1,  17, N'PGGCN013', '2026-05-22T13:20:00', '2026-12-31T23:59:59', 1, 0),
+(14, 10, 18, N'PGGCN014', '2026-06-09T09:00:00', '2026-12-31T23:59:59', 1, 0),
+(15, 1,  19, N'PGGCN015', '2026-06-28T15:30:00', '2026-12-31T23:59:59', 1, 0),
+(16, 1,  20, N'PGGCN016', '2026-07-14T09:20:00', '2026-12-31T23:59:59', 1, 0);
+SET IDENTITY_INSERT dbo.phieu_giam_gia_ca_nhan OFF;
+GO
+
+/* =========================================================================
+   21. PHƯƠNG THỨC THANH TOÁN
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.phuong_thuc_thanh_toan ON;
+INSERT INTO dbo.phuong_thuc_thanh_toan (id, ma, kieu_thanh_toan, deleted) VALUES
+(1, N'PTTT001', N'Tiền mặt',                       0),
+(2, N'PTTT002', N'Chuyển khoản',                   0),
+(3, N'PTTT003', N'VNPay',                          0),
+(4, N'PTTT004', N'COD - Thanh toán khi nhận hàng', 0),
+(5, N'PTTT005', N'Momo',                           0),
+(6, N'PTTT006', N'ZaloPay',                        0);
+SET IDENTITY_INSERT dbo.phuong_thuc_thanh_toan OFF;
+GO
+
+/* =========================================================================
+   22. HÓA ĐƠN - 25 đơn
+   trang_thai: 1=Chờ xác nhận, 2=Chờ giao, 3=Đang giao, 4=Hoàn thành, 5=Đã hủy
+   loai_don : TAI_QUAY | ONLINE
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.hoa_don ON;
+INSERT INTO dbo.hoa_don
+(id, id_khach_hang, id_nhan_vien, id_phieu_giam_gia, ma, tien_san_pham, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, ghi_chu, ten_khach_hang, dia_chi_khach_hang, so_dien_thoai_khach_hang, email, ngay_tao, ngay_thanh_toan, trang_thai, deleted, created_at, created_by, updated_at, updated_by) VALUES
+(1, 1, 1, 1, N'HD000001', 1580000.00, N'ONLINE', 30000.00, 1610000.00, 1510000.00, N'Giao giờ hành chính', N'Nguyễn Anh Tuấn', N'Số 24 ngõ 165 Cầu Giấy, Quan Hoa, Cầu Giấy, Hà Nội', '0912000001', N'tuan.anh@gmail.com', '2026-01-18T09:12:00', '2026-01-18T09:20:00+07:00', 4, 0, '2026-01-18T09:12:00', 1, '2026-01-21T15:00:00', 1),
+(2, 2, 2, NULL, N'HD000002', 890000.00, N'TAI_QUAY', 0.00, 890000.00, 890000.00, N'Khách mua trực tiếp', N'Trần Minh Quân', N'Số 9 ngách 12 Định Công Hạ, Định Công, Hoàng Mai, Hà Nội', '0912000002', N'quan.minh@gmail.com', '2026-01-25T14:30:00', '2026-01-25T14:32:00+07:00', 4, 0, '2026-01-25T14:30:00', 2, '2026-01-25T14:35:00', 2),
+(3, 3, 1, 7, N'HD000003', 859000.00, N'TAI_QUAY', 0.00, 859000.00, 809000.00, N'Khách thử áo tại cửa hàng', N'Lê Thu Hương', N'Số 145 Nguyễn Đình Chiểu, Võ Thị Sáu, Quận 3, Hồ Chí Minh', '0912000003', N'huong.thu@gmail.com', '2026-02-05T10:05:00', '2026-02-05T10:15:00+07:00', 4, 0, '2026-02-05T10:05:00', 1, '2026-02-05T10:20:00', 1),
+(4, 4, 3, NULL, N'HD000004', 1280000.00, N'ONLINE', 30000.00, 1310000.00, 1310000.00, N'Gọi trước khi giao', N'Phạm Đức Anh', N'Số 56 Tô Hiệu, Trại Cau, Lê Chân, Hải Phòng', '0912000004', N'anh.duc@gmail.com', '2026-02-22T16:40:00', NULL, 3, 0, '2026-02-22T16:40:00', 3, '2026-02-24T08:30:00', 3),
+(5, 5, 2, 3, N'HD000005', 1580000.00, N'ONLINE', 35000.00, 1615000.00, 1515000.00, N'Đóng gói cẩn thận', N'Vũ Ngọc Mai', N'Số 210 Núi Thành, Hoà Cường Bắc, Hải Châu, Đà Nẵng', '0912000005', N'mai.ngoc@gmail.com', '2026-03-03T11:20:00', '2026-03-03T11:25:00+07:00', 2, 0, '2026-03-03T11:20:00', 2, '2026-03-04T09:00:00', 2),
+(6, 6, 4, NULL, N'HD000006', 690000.00, N'TAI_QUAY', 0.00, 690000.00, 690000.00, NULL, N'Đặng Bảo Long', N'Số 3 ngõ 82 Nguyễn Tuân, Nhân Chính, Thanh Xuân, Hà Nội', '0912000006', N'long.bao@gmail.com', '2026-03-14T15:50:00', '2026-03-14T15:52:00+07:00', 4, 0, '2026-03-14T15:50:00', 4, '2026-03-14T15:55:00', 4),
+(7, 7, 1, NULL, N'HD000007', 0.00, N'ONLINE', 25000.00, 25000.00, 25000.00, N'Khách hủy do đặt nhầm size', N'Hoàng Phương Thảo', N'Số 18 Nguyễn Thị Thập, Tân Phong, Quận 7, Hồ Chí Minh', '0912000007', N'thao.phuong@gmail.com', '2026-03-25T08:45:00', NULL, 5, 0, '2026-03-25T08:45:00', 1, '2026-03-26T10:10:00', 1),
+(8, 8, 3, 4, N'HD000008', 1698000.00, N'ONLINE', 30000.00, 1728000.00, 1578000.00, N'Giao cuối tuần', N'Bùi Hoàng Nam', N'Số 77 Nguyễn Văn Cừ, An Khánh, Ninh Kiều, Cần Thơ', '0912000008', N'nam.hoang@gmail.com', '2026-04-10T13:15:00', '2026-04-10T13:22:00+07:00', 4, 0, '2026-04-10T13:15:00', 3, '2026-04-14T17:00:00', 3),
+(9, 9, 5, NULL, N'HD000009', 778000.00, N'ONLINE', 20000.00, 798000.00, 798000.00, NULL, N'Ngô Khánh Ly', N'Số 5 ngõ 30 Ngô Gia Tự, Việt Hưng, Long Biên, Hà Nội', '0912000009', N'ly.khanh@gmail.com', '2026-04-21T09:35:00', '2026-04-21T09:40:00+07:00', 4, 0, '2026-04-21T09:35:00', 5, '2026-04-23T14:20:00', 5),
+(10, 10, 2, NULL, N'HD000010', 1269000.00, N'TAI_QUAY', 0.00, 1269000.00, 1269000.00, N'Khách quen', N'Dương Việt Cường', N'Số 102 Đại lộ Bình Dương, Phú Hoà, Thủ Dầu Một, Bình Dương', '0912000010', N'cuong.viet@gmail.com', '2026-05-06T10:50:00', '2026-05-06T10:53:00+07:00', 4, 0, '2026-05-06T10:50:00', 2, '2026-05-06T11:00:00', 2),
+(11, 1, 4, 3, N'HD000011', 1338000.00, N'ONLINE', 30000.00, 1368000.00, 1268000.00, N'Giao ngoài giờ hành chính', N'Nguyễn Anh Tuấn', N'Toà S2 Vinhomes Smart City, Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '0912000001', N'tuan.anh@gmail.com', '2026-06-12T19:05:00', '2026-06-12T19:10:00+07:00', 3, 0, '2026-06-12T19:05:00', 4, '2026-06-14T08:15:00', 4),
+(12, 3, 5, NULL, N'HD000012', 1188000.00, N'ONLINE', 25000.00, 1213000.00, 1213000.00, N'Đơn mới, chờ xác nhận', N'Lê Thu Hương', N'Toà Landmark 81, Điện Biên Phủ, Phường 25, Bình Thạnh, Hồ Chí Minh', '0912000003', N'huong.thu@gmail.com', '2026-07-28T20:30:00', NULL, 1, 0, '2026-07-28T20:30:00', 5, NULL, NULL),
+(13, 11, 6, 8, N'HD000013', 3289000.00, N'ONLINE', 40000.00, 3329000.00, 2929000.00, N'Đặt áo cho cả đội bóng đá', N'Lý Thanh Tùng', N'Số 41 Nguyễn Chí Thanh, Ngọc Khánh, Ba Đình, Hà Nội', '0912000011', N'tung.thanh@gmail.com', '2026-05-14T10:20:00', '2026-05-14T10:30:00+07:00', 4, 0, '2026-05-14T10:20:00', 6, '2026-05-18T16:00:00', 6),
+(14, 12, 7, 7, N'HD000014', 769000.00, N'ONLINE', 25000.00, 794000.00, 744000.00, N'Áo cầu lông nữ', N'Phan Huyền Nga', N'Số 89 Cộng Hoà, Phường 4, Tân Bình, Hồ Chí Minh', '0912000012', N'huyen.nga@gmail.com', '2026-05-20T14:15:00', '2026-05-20T14:20:00+07:00', 4, 0, '2026-05-20T14:15:00', 7, '2026-05-23T11:30:00', 7),
+(15, 13, 8, NULL, N'HD000015', 1258000.00, N'TAI_QUAY', 0.00, 1258000.00, 1258000.00, N'Mua áo bóng chuyền tại quầy', N'Trương Quốc Huy', N'Số 132 Điện Biên Phủ, Vĩnh Trung, Thanh Khê, Đà Nẵng', '0912000013', N'huy.quoc@gmail.com', '2026-06-02T09:40:00', '2026-06-02T09:45:00+07:00', 4, 0, '2026-06-02T09:40:00', 8, '2026-06-02T09:50:00', 8),
+(16, 14, 5, 9, N'HD000016', 1698000.00, N'ONLINE', 30000.00, 1728000.00, 1648000.00, N'Combo áo tập gym', N'Cao Thùy Dương', N'Số 7 Nguyễn Khuyến, Văn Quán, Hà Đông, Hà Nội', '0912000014', N'duong.thuy@gmail.com', '2026-06-15T16:25:00', '2026-06-15T16:30:00+07:00', 4, 0, '2026-06-15T16:25:00', 5, '2026-06-19T10:15:00', 5),
+(17, 15, 2, NULL, N'HD000017', 878000.00, N'ONLINE', 30000.00, 908000.00, 908000.00, N'Áo bơi mùa hè', N'Hà Trung Kiên', N'Số 33 Lê Hồng Phong, Hưng Bình, Vinh, Nghệ An', '0912000015', N'kien.trung@gmail.com', '2026-06-24T11:05:00', '2026-06-24T11:12:00+07:00', 4, 0, '2026-06-24T11:05:00', 2, '2026-06-28T15:40:00', 2),
+(18, 16, 6, 1, N'HD000018', 1188000.00, N'ONLINE', 25000.00, 1213000.00, 1113000.00, N'Khách hàng mới', N'Đinh Lan Anh', N'Số 202 Ba Tháng Hai, Phường 12, Quận 10, Hồ Chí Minh', '0912000016', N'anh.lan@gmail.com', '2026-07-02T13:50:00', '2026-07-02T13:55:00+07:00', 4, 0, '2026-07-02T13:50:00', 6, '2026-07-06T09:20:00', 6),
+(19, 17, 7, NULL, N'HD000019', 1018000.00, N'ONLINE', 25000.00, 1043000.00, 1043000.00, N'Áo chạy bộ nữ', N'Mai Gia Linh', N'Số 18 Võ Chí Công, Xuân La, Tây Hồ, Hà Nội', '0912000017', N'linh.gia@gmail.com', '2026-07-09T10:30:00', '2026-07-09T10:35:00+07:00', 3, 0, '2026-07-09T10:30:00', 7, '2026-07-11T08:00:00', 7),
+(20, 18, 8, 2, N'HD000020', 2270000.00, N'TAI_QUAY', 0.00, 2270000.00, 2070000.00, N'Mua nhiều áo cho CLB', N'Tạ Đăng Khoa', N'Số 55 Nguyễn Đăng Đạo, Suối Hoa, Bắc Ninh', '0912000018', N'khoa.dang@gmail.com', '2026-07-16T15:10:00', '2026-07-16T15:20:00+07:00', 4, 0, '2026-07-16T15:10:00', 8, '2026-07-16T15:30:00', 8),
+(21, 19, 1, 7, N'HD000021', 619000.00, N'ONLINE', 35000.00, 654000.00, 604000.00, N'Áo đạp xe', N'Chu Mỹ Tâm', N'Số 96 Trần Phú, Lộc Thọ, Nha Trang, Khánh Hoà', '0912000019', N'tam.my@gmail.com', '2026-07-23T09:45:00', '2026-07-23T09:50:00+07:00', 2, 0, '2026-07-23T09:45:00', 1, '2026-07-25T14:00:00', 1),
+(22, 20, 3, NULL, N'HD000022', 789000.00, N'ONLINE', 30000.00, 819000.00, 819000.00, N'Áo tennis và polo', N'Đoàn Hữu Bình', N'Số 12 Võ Văn Ngân, Linh Trung, Thủ Đức, Hồ Chí Minh', '0912000020', N'binh.huu@gmail.com', '2026-07-30T17:20:00', NULL, 1, 0, '2026-07-30T17:20:00', 3, NULL, NULL),
+(23, 5, 4, NULL, N'HD000023', 558000.00, N'TAI_QUAY', 0.00, 558000.00, 558000.00, N'Mua thêm áo cầu lông', N'Vũ Ngọc Mai', N'Số 210 Núi Thành, Hoà Cường Bắc, Hải Châu, Đà Nẵng', '0912000005', N'mai.ngoc@gmail.com', '2026-08-01T10:15:00', '2026-08-01T10:18:00+07:00', 4, 0, '2026-08-01T10:15:00', 4, '2026-08-01T10:25:00', 4),
+(24, 8, 6, NULL, N'HD000024', 1178000.00, N'ONLINE', 30000.00, 1208000.00, 1208000.00, N'Áo bóng rổ cho con', N'Bùi Hoàng Nam', N'Số 77 Nguyễn Văn Cừ, An Khánh, Ninh Kiều, Cần Thơ', '0912000008', N'nam.hoang@gmail.com', '2026-08-03T14:40:00', '2026-08-03T14:45:00+07:00', 2, 0, '2026-08-03T14:40:00', 6, '2026-08-04T09:00:00', 6),
+(25, 13, 7, NULL, N'HD000025', 849000.00, N'ONLINE', 25000.00, 874000.00, 874000.00, N'Đơn mới nhất', N'Trương Quốc Huy', N'Số 132 Điện Biên Phủ, Vĩnh Trung, Thanh Khê, Đà Nẵng', '0912000013', N'huy.quoc@gmail.com', '2026-08-05T08:50:00', NULL, 1, 0, '2026-08-05T08:50:00', 7, NULL, NULL);
+SET IDENTITY_INSERT dbo.hoa_don OFF;
+GO
+
+/* =========================================================================
+   23. HÓA ĐƠN CHI TIẾT
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.hoa_don_chi_tiet ON;
+INSERT INTO dbo.hoa_don_chi_tiet
+(id, id_hoa_don, id_chi_tiet_sp, ma, gia, trang_thai, ghi_chu, deleted, so_luong) VALUES
+(1,  1,  1,  N'HDCT001',  790000.00, 1, NULL,                          0, 2),
+(2,  2,  6,  N'HDCT002',  890000.00, 1, NULL,                          0, 1),
+(3,  3,  36, N'HDCT003',  859000.00, 1, N'Khách đã thử vừa người',     0, 1),
+(4,  4,  49, N'HDCT004',  590000.00, 1, NULL,                          0, 1),
+(5,  4,  26, N'HDCT005',  690000.00, 1, NULL,                          0, 1),
+(6,  4,  43, N'HDCT006',  279000.00, 0, N'Khách bỏ bớt 1 áo',          0, 1),
+(7,  5,  23, N'HDCT007',  990000.00, 1, NULL,                          0, 1),
+(8,  5,  52, N'HDCT008',  590000.00, 1, NULL,                          0, 1),
+(9,  6,  26, N'HDCT009',  690000.00, 1, NULL,                          0, 1),
+(10, 7,  10, N'HDCT010',  329000.00, 0, N'Hủy do khách đặt nhầm size', 0, 2),
+(11, 8,  74, N'HDCT011',  849000.00, 1, NULL,                          0, 2),
+(12, 9,  10, N'HDCT012',  329000.00, 1, NULL,                          0, 1),
+(13, 9,  77, N'HDCT013',  449000.00, 1, NULL,                          0, 1),
+(14, 10, 23, N'HDCT014',  990000.00, 1, NULL,                          0, 1),
+(15, 10, 43, N'HDCT015',  279000.00, 1, NULL,                          0, 1),
+(16, 11, 62, N'HDCT016',  789000.00, 1, NULL,                          0, 1),
+(17, 11, 33, N'HDCT017',  549000.00, 1, NULL,                          0, 1),
+(18, 12, 40, N'HDCT018',  649000.00, 1, N'Chờ xác nhận số lượng',      0, 1),
+(19, 12, 90, N'HDCT019',  539000.00, 1, NULL,                          0, 1),
+(20, 13, 17, N'HDCT020',  299000.00, 1, N'In số áo cho cả đội',        0, 11),
+(21, 14, 46, N'HDCT021',  769000.00, 1, NULL,                          0, 1),
+(22, 15, 68, N'HDCT022',  629000.00, 1, NULL,                          0, 2),
+(23, 16, 74, N'HDCT023',  849000.00, 1, NULL,                          0, 2),
+(24, 17, 86, N'HDCT024',  359000.00, 1, NULL,                          0, 1),
+(25, 17, 88, N'HDCT025',  519000.00, 1, NULL,                          0, 1),
+(26, 18, 11, N'HDCT026',  329000.00, 1, NULL,                          0, 1),
+(27, 18, 36, N'HDCT027',  859000.00, 1, NULL,                          0, 1),
+(28, 18, 43, N'HDCT028',  279000.00, 0, N'Đổi sang mẫu khác',          0, 1),
+(29, 19, 59, N'HDCT029',  529000.00, 1, NULL,                          0, 1),
+(30, 19, 83, N'HDCT030',  489000.00, 1, NULL,                          0, 1),
+(31, 20, 1,  N'HDCT031',  790000.00, 1, NULL,                          0, 2),
+(32, 20, 26, N'HDCT032',  690000.00, 1, NULL,                          0, 1),
+(33, 20, 36, N'HDCT033',  859000.00, 0, N'Hết size, hoàn tiền',        0, 1),
+(34, 21, 89, N'HDCT034',  619000.00, 1, NULL,                          0, 1),
+(35, 22, 62, N'HDCT035',  789000.00, 1, NULL,                          0, 1),
+(36, 22, 90, N'HDCT036',  539000.00, 0, N'Chờ khách xác nhận màu',     0, 1),
+(37, 23, 43, N'HDCT037',  279000.00, 1, NULL,                          0, 1),
+(38, 23, 44, N'HDCT038',  279000.00, 1, NULL,                          0, 1),
+(39, 24, 30, N'HDCT039',  629000.00, 1, NULL,                          0, 1),
+(40, 24, 33, N'HDCT040',  549000.00, 1, NULL,                          0, 1),
+(41, 25, 74, N'HDCT041',  849000.00, 1, NULL,                          0, 1);
+SET IDENTITY_INSERT dbo.hoa_don_chi_tiet OFF;
+GO
+
+/* =========================================================================
+   24. HÌNH THỨC THANH TOÁN CỦA HÓA ĐƠN
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.hinh_thuc_thanh_toan ON;
+INSERT INTO dbo.hinh_thuc_thanh_toan
+(id, id_hoa_don, id_phuong_thuc_thanh_toan, tien_chuyen_khoan, tien_mat, ma, deleted) VALUES
+(1, 1, 3, 1510000.00, 0.00, N'HTTT001', 0),
+(2, 2, 1, 0.00, 890000.00, N'HTTT002', 0),
+(3, 3, 2, 809000.00, 0.00, N'HTTT003', 0),
+(4, 4, 4, 0.00, 1310000.00, N'HTTT004', 0),
+(5, 5, 3, 1515000.00, 0.00, N'HTTT005', 0),
+(6, 6, 1, 0.00, 690000.00, N'HTTT006', 0),
+(7,  7,  4,       0.00,       0.00, N'HTTT007', 0),
+(8, 8, 3, 1578000.00, 0.00, N'HTTT008', 0),
+(9, 9, 4, 0.00, 798000.00, N'HTTT009', 0),
+(10, 10, 1, 0.00, 1269000.00, N'HTTT010', 0),
+(11, 11, 3, 1268000.00, 0.00, N'HTTT011', 0),
+(12, 12, 4,       0.00,       0.00, N'HTTT012', 0),
+(13, 13, 2, 2929000.00, 0.00, N'HTTT013', 0),
+(14, 14, 5, 744000.00, 0.00, N'HTTT014', 0),
+(15, 15, 1, 0.00, 1258000.00, N'HTTT015', 0),
+(16, 16, 3, 1648000.00, 0.00, N'HTTT016', 0),
+(17, 17, 6, 908000.00, 0.00, N'HTTT017', 0),
+(18, 18, 3, 1113000.00, 0.00, N'HTTT018', 0),
+(19, 19, 4, 0.00, 1043000.00, N'HTTT019', 0),
+(20, 20, 2, 2070000.00, 0.00, N'HTTT020', 0),
+(21, 21, 5, 604000.00, 0.00, N'HTTT021', 0),
+(22, 22, 4,       0.00,       0.00, N'HTTT022', 0),
+(23, 23, 1, 0.00, 558000.00, N'HTTT023', 0),
+(24, 24, 3, 1208000.00, 0.00, N'HTTT024', 0),
+(25, 25, 4,       0.00,       0.00, N'HTTT025', 0),
+(26, 3,  1,       0.00,       0.00, N'HTTT026', 1);
+SET IDENTITY_INSERT dbo.hinh_thuc_thanh_toan OFF;
+GO
+
+/* =========================================================================
+   25. LỊCH SỬ HÓA ĐƠN
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.lich_su_hoa_don ON;
+INSERT INTO dbo.lich_su_hoa_don
+(id, id_hoa_don, id_nhan_vien, ma, hanh_dong, thoi_gian, deleted) VALUES
+(1,  1,  1, N'LSHD001', N'Tạo hóa đơn',                '2026-01-18T09:12:00+07:00', 0),
+(2,  1,  1, N'LSHD002', N'Xác nhận thanh toán',        '2026-01-18T09:20:00+07:00', 0),
+(3,  1,  1, N'LSHD003', N'Bàn giao đơn vị vận chuyển', '2026-01-19T08:00:00+07:00', 0),
+(4,  1,  1, N'LSHD004', N'Giao hàng thành công',       '2026-01-21T15:00:00+07:00', 0),
+(5,  2,  2, N'LSHD005', N'Tạo hóa đơn tại quầy',       '2026-01-25T14:30:00+07:00', 0),
+(6,  2,  2, N'LSHD006', N'Thanh toán tiền mặt',        '2026-01-25T14:32:00+07:00', 0),
+(7,  2,  2, N'LSHD007', N'Hoàn thành',                 '2026-01-25T14:35:00+07:00', 0),
+(8,  3,  1, N'LSHD008', N'Tạo hóa đơn tại quầy',       '2026-02-05T10:05:00+07:00', 0),
+(9,  3,  1, N'LSHD009', N'Áp dụng phiếu AOTHETHAO50',  '2026-02-05T10:10:00+07:00', 0),
+(10, 3,  1, N'LSHD010', N'Hoàn thành',                 '2026-02-05T10:20:00+07:00', 0),
+(11, 4,  3, N'LSHD011', N'Tạo hóa đơn',                '2026-02-22T16:40:00+07:00', 0),
+(12, 4,  3, N'LSHD012', N'Xác nhận đơn hàng',          '2026-02-23T09:00:00+07:00', 0),
+(13, 4,  3, N'LSHD013', N'Đang giao hàng',             '2026-02-24T08:30:00+07:00', 0),
+(14, 5,  2, N'LSHD014', N'Tạo hóa đơn',                '2026-03-03T11:20:00+07:00', 0),
+(15, 5,  2, N'LSHD015', N'Xác nhận thanh toán',        '2026-03-03T11:25:00+07:00', 0),
+(16, 5,  2, N'LSHD016', N'Chờ giao hàng',              '2026-03-04T09:00:00+07:00', 0),
+(17, 6,  4, N'LSHD017', N'Tạo hóa đơn tại quầy',       '2026-03-14T15:50:00+07:00', 0),
+(18, 6,  4, N'LSHD018', N'Hoàn thành',                 '2026-03-14T15:55:00+07:00', 0),
+(19, 7,  1, N'LSHD019', N'Tạo hóa đơn',                '2026-03-25T08:45:00+07:00', 0),
+(20, 7,  1, N'LSHD020', N'Hủy đơn theo yêu cầu khách', '2026-03-26T10:10:00+07:00', 0),
+(21, 8,  3, N'LSHD021', N'Tạo hóa đơn',                '2026-04-10T13:15:00+07:00', 0),
+(22, 8,  3, N'LSHD022', N'Xác nhận thanh toán',        '2026-04-10T13:22:00+07:00', 0),
+(23, 8,  3, N'LSHD023', N'Giao hàng thành công',       '2026-04-14T17:00:00+07:00', 0),
+(24, 9,  5, N'LSHD024', N'Tạo hóa đơn',                '2026-04-21T09:35:00+07:00', 0),
+(25, 9,  5, N'LSHD025', N'Giao hàng thành công',       '2026-04-23T14:20:00+07:00', 0),
+(26, 10, 2, N'LSHD026', N'Tạo hóa đơn tại quầy',       '2026-05-06T10:50:00+07:00', 0),
+(27, 10, 2, N'LSHD027', N'Hoàn thành',                 '2026-05-06T11:00:00+07:00', 0),
+(28, 11, 4, N'LSHD028', N'Tạo hóa đơn',                '2026-06-12T19:05:00+07:00', 0),
+(29, 11, 4, N'LSHD029', N'Đang giao hàng',             '2026-06-14T08:15:00+07:00', 0),
+(30, 12, 5, N'LSHD030', N'Tạo hóa đơn',                '2026-07-28T20:30:00+07:00', 0),
+(31, 13, 6, N'LSHD031', N'Tạo hóa đơn',                '2026-05-14T10:20:00+07:00', 0),
+(32, 13, 6, N'LSHD032', N'Áp dụng phiếu TEAM20',       '2026-05-14T10:25:00+07:00', 0),
+(33, 13, 6, N'LSHD033', N'In số áo cho đội',           '2026-05-15T09:00:00+07:00', 0),
+(34, 13, 6, N'LSHD034', N'Giao hàng thành công',       '2026-05-18T16:00:00+07:00', 0),
+(35, 14, 7, N'LSHD035', N'Tạo hóa đơn',                '2026-05-20T14:15:00+07:00', 0),
+(36, 14, 7, N'LSHD036', N'Giao hàng thành công',       '2026-05-23T11:30:00+07:00', 0),
+(37, 15, 8, N'LSHD037', N'Tạo hóa đơn tại quầy',       '2026-06-02T09:40:00+07:00', 0),
+(38, 15, 8, N'LSHD038', N'Hoàn thành',                 '2026-06-02T09:50:00+07:00', 0),
+(39, 16, 5, N'LSHD039', N'Tạo hóa đơn',                '2026-06-15T16:25:00+07:00', 0),
+(40, 16, 5, N'LSHD040', N'Xác nhận thanh toán',        '2026-06-15T16:30:00+07:00', 0),
+(41, 16, 5, N'LSHD041', N'Giao hàng thành công',       '2026-06-19T10:15:00+07:00', 0),
+(42, 17, 2, N'LSHD042', N'Tạo hóa đơn',                '2026-06-24T11:05:00+07:00', 0),
+(43, 17, 2, N'LSHD043', N'Giao hàng thành công',       '2026-06-28T15:40:00+07:00', 0),
+(44, 18, 6, N'LSHD044', N'Tạo hóa đơn',                '2026-07-02T13:50:00+07:00', 0),
+(45, 18, 6, N'LSHD045', N'Áp dụng phiếu WELCOME10',    '2026-07-02T13:52:00+07:00', 0),
+(46, 18, 6, N'LSHD046', N'Giao hàng thành công',       '2026-07-06T09:20:00+07:00', 0),
+(47, 19, 7, N'LSHD047', N'Tạo hóa đơn',                '2026-07-09T10:30:00+07:00', 0),
+(48, 19, 7, N'LSHD048', N'Đang giao hàng',             '2026-07-11T08:00:00+07:00', 0),
+(49, 20, 8, N'LSHD049', N'Tạo hóa đơn tại quầy',       '2026-07-16T15:10:00+07:00', 0),
+(50, 20, 8, N'LSHD050', N'Hoàn thành',                 '2026-07-16T15:30:00+07:00', 0),
+(51, 21, 1, N'LSHD051', N'Tạo hóa đơn',                '2026-07-23T09:45:00+07:00', 0),
+(52, 21, 1, N'LSHD052', N'Chờ giao hàng',              '2026-07-25T14:00:00+07:00', 0),
+(53, 22, 3, N'LSHD053', N'Tạo hóa đơn',                '2026-07-30T17:20:00+07:00', 0),
+(54, 23, 4, N'LSHD054', N'Tạo hóa đơn tại quầy',       '2026-08-01T10:15:00+07:00', 0),
+(55, 23, 4, N'LSHD055', N'Hoàn thành',                 '2026-08-01T10:25:00+07:00', 0),
+(56, 24, 6, N'LSHD056', N'Tạo hóa đơn',                '2026-08-03T14:40:00+07:00', 0),
+(57, 24, 6, N'LSHD057', N'Chờ giao hàng',              '2026-08-04T09:00:00+07:00', 0),
+(58, 25, 7, N'LSHD058', N'Tạo hóa đơn',                '2026-08-05T08:50:00+07:00', 0);
+SET IDENTITY_INSERT dbo.lich_su_hoa_don OFF;
+GO
+
+/* =========================================================================
+   26. GIỎ HÀNG (giỏ đang hoạt động - chưa gắn hóa đơn)
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.gio_hang ON;
+INSERT INTO dbo.gio_hang (id, id_khach_hang, id_hoa_don, tong_tien, created_at, updated_at) VALUES
+(1, 1, NULL, 1958000.00, '2026-07-20T08:30:00', '2026-08-01T09:00:00'),
+(2, 2, NULL, 890000.00, '2026-07-22T10:15:00', '2026-08-02T11:20:00'),
+(3, 5, NULL, 1687000.00, '2026-07-25T14:45:00', '2026-08-03T15:10:00'),
+(4, 7, NULL, 608000.00, '2026-07-28T09:05:00', '2026-08-03T20:00:00'),
+(5, 9, NULL, 1508000.00, '2026-07-30T16:20:00', '2026-08-04T08:40:00'),
+(6, 10, NULL, 848000.00, '2026-08-01T19:50:00', '2026-08-04T21:15:00'),
+(7, 12, NULL, 1298000.00, '2026-08-02T08:20:00', '2026-08-04T10:30:00'),
+(8, 14, NULL, 978000.00, '2026-08-02T15:40:00', '2026-08-05T07:50:00'),
+(9, 16, NULL, 937000.00, '2026-08-03T11:10:00', '2026-08-05T08:20:00'),
+(10, 19, NULL, 1680000.00, '2026-08-04T20:05:00', '2026-08-05T09:15:00');
+SET IDENTITY_INSERT dbo.gio_hang OFF;
+GO
+
+/* =========================================================================
+   27. GIỎ HÀNG CHI TIẾT
+   ========================================================================= */
+SET IDENTITY_INSERT dbo.gio_hang_chi_tiet ON;
+INSERT INTO dbo.gio_hang_chi_tiet
+(id, id_gio_hang, id_chi_tiet_sp, so_luong, gia, thanh_tien, created_at) VALUES
+(1, 1, 1, 1, 790000.00, 790000.00, '2026-07-20T08:30:00'),
+(2, 1, 43, 1, 279000.00, 279000.00, '2026-07-21T09:00:00'),
+(3, 1, 49, 1, 590000.00, 590000.00, '2026-07-21T09:05:00'),
+(4, 1, 17, 1, 299000.00, 299000.00, '2026-08-01T09:00:00'),
+(5, 2, 6, 1, 890000.00, 890000.00, '2026-07-22T10:15:00'),
+(6, 3, 74, 1, 849000.00, 849000.00, '2026-07-25T14:45:00'),
+(7, 3, 90, 1, 539000.00, 539000.00, '2026-07-26T08:00:00'),
+(8, 3, 17, 1, 299000.00, 299000.00, '2026-08-03T15:10:00'),
+(9, 4, 10, 1, 329000.00, 329000.00, '2026-07-28T09:05:00'),
+(10, 4, 43, 1, 279000.00, 279000.00, '2026-07-28T09:10:00'),
+(11, 5, 36, 1, 859000.00, 859000.00, '2026-07-30T16:20:00'),
+(12, 5, 40, 1, 649000.00, 649000.00, '2026-08-04T08:40:00'),
+(13, 6, 33, 1, 549000.00, 549000.00, '2026-08-01T19:50:00'),
+(14, 6, 17, 1, 299000.00, 299000.00, '2026-08-01T19:55:00'),
+(15, 7, 46, 1, 769000.00, 769000.00, '2026-08-02T08:20:00'),
+(16, 7, 59, 1, 529000.00, 529000.00, '2026-08-04T10:30:00'),
+(17, 8, 83, 1, 489000.00, 489000.00, '2026-08-02T15:40:00'),
+(18, 8, 84, 1, 489000.00, 489000.00, '2026-08-05T07:50:00'),
+(19, 9, 86, 1, 359000.00, 359000.00, '2026-08-03T11:10:00'),
+(20, 9, 43, 1, 279000.00, 279000.00, '2026-08-03T11:15:00'),
+(21, 9, 17, 1, 299000.00, 299000.00, '2026-08-05T08:20:00'),
+(22, 10, 23, 1, 990000.00, 990000.00, '2026-08-04T20:05:00'),
+(23, 10, 26, 1, 690000.00, 690000.00, '2026-08-05T09:15:00');
+SET IDENTITY_INSERT dbo.gio_hang_chi_tiet OFF;
+GO
+
+COMMIT TRANSACTION;
+GO
+
+/* =========================================================================
+   28. ĐỒNG BỘ LẠI GIÁ TRỊ IDENTITY
+   ========================================================================= */
+DBCC CHECKIDENT ('dbo.quyen_han',              RESEED);
+DBCC CHECKIDENT ('dbo.tai_khoan',              RESEED);
+DBCC CHECKIDENT ('dbo.nhan_vien',              RESEED);
+DBCC CHECKIDENT ('dbo.khach_hang',             RESEED);
+DBCC CHECKIDENT ('dbo.dia_chi_khach_hang',     RESEED);
+DBCC CHECKIDENT ('dbo.danh_muc',               RESEED);
+DBCC CHECKIDENT ('dbo.thuong_hieu',            RESEED);
+DBCC CHECKIDENT ('dbo.chat_lieu',              RESEED);
+DBCC CHECKIDENT ('dbo.cong_nghe_vai',          RESEED);
+DBCC CHECKIDENT ('dbo.mon_the_thao',           RESEED);
+DBCC CHECKIDENT ('dbo.mau_sac',                RESEED);
+DBCC CHECKIDENT ('dbo.kich_co',                RESEED);
+DBCC CHECKIDENT ('dbo.anh_san_pham',           RESEED);
+DBCC CHECKIDENT ('dbo.san_pham',               RESEED);
+DBCC CHECKIDENT ('dbo.chi_tiet_san_pham',      RESEED);
+DBCC CHECKIDENT ('dbo.dot_giam_gia',           RESEED);
+DBCC CHECKIDENT ('dbo.chi_tiet_dot_giam_gia',  RESEED);
+DBCC CHECKIDENT ('dbo.phieu_giam_gia',         RESEED);
+DBCC CHECKIDENT ('dbo.phieu_giam_gia_ca_nhan', RESEED);
+DBCC CHECKIDENT ('dbo.phuong_thuc_thanh_toan', RESEED);
+DBCC CHECKIDENT ('dbo.hoa_don',                RESEED);
+DBCC CHECKIDENT ('dbo.hoa_don_chi_tiet',       RESEED);
+DBCC CHECKIDENT ('dbo.hinh_thuc_thanh_toan',   RESEED);
+DBCC CHECKIDENT ('dbo.lich_su_hoa_don',        RESEED);
+DBCC CHECKIDENT ('dbo.gio_hang',               RESEED);
+DBCC CHECKIDENT ('dbo.gio_hang_chi_tiet',      RESEED);
+GO
+
+/* =========================================================================
+   29. KIỂM TRA NHANH SỐ BẢN GHI
+   ========================================================================= */
+SELECT 'quyen_han' AS bang, COUNT(*) AS so_ban_ghi FROM dbo.quyen_han
+UNION ALL SELECT 'tai_khoan',              COUNT(*) FROM dbo.tai_khoan
+UNION ALL SELECT 'nhan_vien',              COUNT(*) FROM dbo.nhan_vien
+UNION ALL SELECT 'khach_hang',             COUNT(*) FROM dbo.khach_hang
+UNION ALL SELECT 'dia_chi_khach_hang',     COUNT(*) FROM dbo.dia_chi_khach_hang
+UNION ALL SELECT 'danh_muc',               COUNT(*) FROM dbo.danh_muc
+UNION ALL SELECT 'thuong_hieu',            COUNT(*) FROM dbo.thuong_hieu
+UNION ALL SELECT 'chat_lieu',              COUNT(*) FROM dbo.chat_lieu
+UNION ALL SELECT 'cong_nghe_vai',          COUNT(*) FROM dbo.cong_nghe_vai
+UNION ALL SELECT 'mon_the_thao',           COUNT(*) FROM dbo.mon_the_thao
+UNION ALL SELECT 'mau_sac',                COUNT(*) FROM dbo.mau_sac
+UNION ALL SELECT 'kich_co',                COUNT(*) FROM dbo.kich_co
+UNION ALL SELECT 'anh_san_pham',           COUNT(*) FROM dbo.anh_san_pham
+UNION ALL SELECT 'san_pham',               COUNT(*) FROM dbo.san_pham
+UNION ALL SELECT 'chi_tiet_san_pham',      COUNT(*) FROM dbo.chi_tiet_san_pham
+UNION ALL SELECT 'dot_giam_gia',           COUNT(*) FROM dbo.dot_giam_gia
+UNION ALL SELECT 'chi_tiet_dot_giam_gia',  COUNT(*) FROM dbo.chi_tiet_dot_giam_gia
+UNION ALL SELECT 'phieu_giam_gia',         COUNT(*) FROM dbo.phieu_giam_gia
+UNION ALL SELECT 'phieu_giam_gia_ca_nhan', COUNT(*) FROM dbo.phieu_giam_gia_ca_nhan
+UNION ALL SELECT 'phuong_thuc_thanh_toan', COUNT(*) FROM dbo.phuong_thuc_thanh_toan
+UNION ALL SELECT 'hoa_don',                COUNT(*) FROM dbo.hoa_don
+UNION ALL SELECT 'hoa_don_chi_tiet',       COUNT(*) FROM dbo.hoa_don_chi_tiet
+UNION ALL SELECT 'hinh_thuc_thanh_toan',   COUNT(*) FROM dbo.hinh_thuc_thanh_toan
+UNION ALL SELECT 'lich_su_hoa_don',        COUNT(*) FROM dbo.lich_su_hoa_don
+UNION ALL SELECT 'gio_hang',               COUNT(*) FROM dbo.gio_hang
+UNION ALL SELECT 'gio_hang_chi_tiet',      COUNT(*) FROM dbo.gio_hang_chi_tiet;
+GO
+
+PRINT N'>>> PHAN 3 XONG: da chen day du du lieu AO THE THAO. Database san sang su dung.';
+GO

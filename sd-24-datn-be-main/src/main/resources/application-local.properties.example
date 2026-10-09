@@ -1,0 +1,6 @@
+# Copy file nay thanh application-local.properties (cung thu muc) va dien khoa that.
+cloudinary.cloud-name=
+cloudinary.api-key=
+cloudinary.api-secret=
+vnpay.tmn-code=
+vnpay.hash-secret=

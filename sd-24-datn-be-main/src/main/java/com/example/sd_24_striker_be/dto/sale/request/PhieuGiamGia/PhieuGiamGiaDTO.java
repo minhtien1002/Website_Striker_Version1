@@ -1,0 +1,117 @@
+package com.example.sd_24_striker_be.dto.sale.request.PhieuGiamGia;
+
+import java.util.List;
+
+public class PhieuGiamGiaDTO {
+    private String ma;
+    private String tenPhieuGiamGia;
+    private String loaiPhieuGiamGia;
+    private Double phanTramGiamGia;
+    private Double soTienGiamToiDa;
+    private Double hoaDonToiThieu;
+    private Integer soLuongDung;
+    private String ngayBatDau; // Changed from Instant to String
+    private String ngayKetThuc; // Changed from Instant to String
+    private Boolean riengTu;
+    private String moTa;
+    private List<Integer> khachHangIds; // ✅ thêm danh sách ID khách hàng
+
+    public PhieuGiamGiaDTO() {
+    }
+
+    public String getMa() {
+        return ma;
+    }
+
+    public void setMa(String ma) {
+        this.ma = ma;
+    }
+
+    public String getTenPhieuGiamGia() {
+        return tenPhieuGiamGia;
+    }
+
+    public void setTenPhieuGiamGia(String tenPhieuGiamGia) {
+        this.tenPhieuGiamGia = tenPhieuGiamGia;
+    }
+
+    public String getLoaiPhieuGiamGia() {
+        return loaiPhieuGiamGia;
+    }
+
+    public void setLoaiPhieuGiamGia(String loaiPhieuGiamGia) {
+        this.loaiPhieuGiamGia = loaiPhieuGiamGia;
+    }
+
+    public Double getPhanTramGiamGia() {
+        return phanTramGiamGia;
+    }
+
+    public void setPhanTramGiamGia(Double phanTramGiamGia) {
+        this.phanTramGiamGia = phanTramGiamGia;
+    }
+
+    public Double getSoTienGiamToiDa() {
+        return soTienGiamToiDa;
+    }
+
+    public void setSoTienGiamToiDa(Double soTienGiamToiDa) {
+        this.soTienGiamToiDa = soTienGiamToiDa;
+    }
+
+    public Double getHoaDonToiThieu() {
+        return hoaDonToiThieu;
+    }
+
+    public void setHoaDonToiThieu(Double hoaDonToiThieu) {
+        this.hoaDonToiThieu = hoaDonToiThieu;
+    }
+
+    public Integer getSoLuongDung() {
+        return soLuongDung;
+    }
+
+    public void setSoLuongDung(Integer soLuongDung) {
+        this.soLuongDung = soLuongDung;
+    }
+
+    public String getNgayBatDau() {
+        return ngayBatDau;
+    }
+
+    public void setNgayBatDau(String ngayBatDau) {
+        this.ngayBatDau = ngayBatDau;
+    }
+
+    public String getNgayKetThuc() {
+        return ngayKetThuc;
+    }
+
+    public void setNgayKetThuc(String ngayKetThuc) {
+        this.ngayKetThuc = ngayKetThuc;
+    }
+
+    public Boolean getRiengTu() {
+        return riengTu;
+    }
+
+    public void setRiengTu(Boolean riengTu) {
+        this.riengTu = riengTu;
+    }
+
+    public String getMoTa() {
+        return moTa;
+    }
+
+    public void setMoTa(String moTa) {
+        this.moTa = moTa;
+    }
+
+    public List<Integer> getKhachHangIds() {
+        return khachHangIds;
+    }
+
+    public void setKhachHangIds(List<Integer> khachHangIds) {
+        this.khachHangIds = khachHangIds;
+    }
+}

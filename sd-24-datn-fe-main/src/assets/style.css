@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #ff3b18;
+  --primary-color-dark: #c92c10;
+  --secondary-color: #6b7280;
+  --ink: #10141a;
+  /* Nunito: chữ tròn trịa, dễ nhìn hơn Barlow Condensed cũ (vốn hẹp, góc cạnh, khó đọc
+     trên bảng số liệu). Dùng chung 1 font cho cả tiêu đề lẫn nội dung để đồng bộ giao diện. */
+  --font-heading: 'Nunito', 'Be Vietnam Pro', sans-serif;
+  --font-body: 'Nunito', 'Be Vietnam Pro', sans-serif;
+}
+
+html {
+  /* Cỡ chữ gốc lớn hơn mặc định trình duyệt (16px) một chút để dễ đọc hơn trên các màn
+     hình quản trị nhiều số liệu - toàn bộ đơn vị rem trong Tailwind sẽ tự scale theo. */
+  font-size: 17px;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #ffffff;
+  color: #000000;
+  /* Đậm hơn mặc định (400) một chút để chữ rõ ràng, dễ đọc hơn trên nền sáng/tối. */
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6,
+.page-title, .panel-title, .modal-title, .section-title, .form-title,
+.card-title, .filter-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.dark body {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.dark .table {
+  background: #374151;
+}
+
+.table thead th {
+  background: #f0f0f0;
+  color: #000000;
+  font-weight: 600;
+}
+
+.dark .table thead th {
+  background: #4b5563;
+  color: #e5e7eb;
+}
+
+.table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.dark .table tbody tr:hover {
+  background: #5a6773;
+}
+
+.btn-primary {
+  @apply bg-[var(--primary-color)] text-white rounded-lg;
+}
+
+.btn-primary:hover {
+  @apply bg-[var(--primary-color-dark)];
+}
+
+.btn-secondary {
+  @apply bg-[var(--secondary-color)] text-white rounded-lg;
+}
+
+.btn-secondary:hover {
+  @apply bg-[#4b5563];
+}
+
+/* STRIKER brand accent overrides for common Bootstrap/CoreUI primary elements */
+.btn.primary,
+.btn-primary:not(.btn-outline-primary) {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn.primary:hover,
+.btn-primary:not(.btn-outline-primary):hover {
+  background: var(--primary-color-dark) !important;
+  border-color: var(--primary-color-dark) !important;
+}
+
+.badge.bg-primary,
+.badge-primary {
+  background-color: var(--primary-color) !important;
+}
+
+a, .text-primary {
+  color: var(--primary-color);
+}

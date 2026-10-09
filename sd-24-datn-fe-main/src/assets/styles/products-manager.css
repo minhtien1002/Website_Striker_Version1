@@ -1,0 +1,48 @@
+/* src/assets/styles/products-manager.css */
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+.custom-table th {
+  background-color: #000000;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 0.75rem 1rem;
+}
+.custom-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+.custom-input.form-control:focus,
+.custom-input.form-select:focus {
+  border-color: #ced4da !important;
+  box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25) !important;
+}
+.btn-primary {
+  background-color: #8B0000;
+  border-color: #8B0000;
+  color: #FFFFFF;
+}
+.btn-secondary {
+  background-color: #D3D3D3;
+  border-color: #D3D3D3;
+  color: #000000;
+}
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: 95vw;
+  }
+  .form-select,
+  .form-control {
+    font-size: 0.9rem;
+  }
+  .table-container {
+    overflow-x: auto;
+  }
+  .custom-table td,
+  .custom-table th {
+    font-size: 0.85rem;
+  }
+}

@@ -1,0 +1,15 @@
+package com.example.sd_24_striker_be.repository.account;
+
+import com.example.sd_24_striker_be.modal.account.QuyenHan;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface QuyenHanRepository extends JpaRepository<QuyenHan, Integer> {
+    
+    Optional<QuyenHan> findByMa(String ma);
+    
+    Optional<QuyenHan> findByCapQuyenHan(Integer capQuyenHan);
+}

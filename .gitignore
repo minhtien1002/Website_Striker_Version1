@@ -1,0 +1,24 @@
+# Secrets (see application-local.properties.example)
+application-local.properties
+.env
+.env.local
+
+# Dependencies / build output
+node_modules/
+target/
+dist/
+sd-24-datn-fe-main/node/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local backups (copies of the code)
+_backup_code_20261009/
+_backup_giao_dien_moi_20261009/
