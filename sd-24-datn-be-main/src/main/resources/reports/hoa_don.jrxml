@@ -14,6 +14,7 @@
 	<parameter name="logoQrImage" class="java.awt.Image"/>
 	<parameter name="logoImage" class="java.awt.Image"/>
 	<parameter name="hinhThucThanhToan" class="java.lang.String"/>
+	<parameter name="phiVanChuyen" class="java.math.BigDecimal"/>
 
 	<!-- Preserved Fields -->
 	<queryString language="sql"><![CDATA[]]></queryString>
@@ -285,7 +286,7 @@
 
 	<!-- Summary Band -->
 	<summary>
-		<band height="280">
+		<band height="300">
 			<line>
 				<reportElement x="20" y="10" width="515" height="1"/>
 				<graphicElement>
@@ -370,41 +371,51 @@
 			</textField>
 			<staticText>
 				<reportElement x="305" y="210" width="120" height="20"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Giảm giá:]]></text>
+				<textElement><font fontName="DejaVu Sans" size="10" isBold="true"/></textElement>
+				<text><![CDATA[Phí vận chuyển:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="425" y="210" width="110" height="20"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{tienGiam} != null ? new java.text.DecimalFormat("#,##0 VND").format($P{tienGiam}) : "0 VND"]]></textFieldExpression>
+				<textElement><font fontName="DejaVu Sans" size="10"/></textElement>
+				<textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0 VND").format($P{phiVanChuyen})]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="305" y="230" width="120" height="20"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="10" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Phần trăm giảm:]]></text>
+				<text><![CDATA[Giảm giá:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="425" y="230" width="110" height="20"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{phanTramGiam} != null ? new java.text.DecimalFormat("#,##0.00").format($P{phanTramGiam}) + "%" : "0%"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{tienGiam} != null ? new java.text.DecimalFormat("#,##0 VND").format($P{tienGiam}) : "0 VND"]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement x="305" y="250" width="120" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Phần trăm giảm:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="425" y="250" width="110" height="20"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{phanTramGiam} != null ? new java.text.DecimalFormat("#,##0.00").format($P{phanTramGiam}) + "%" : "0%"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="305" y="270" width="120" height="20"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="12" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Thành tiền:]]></text>
 			</staticText>
 			<textField>
-				<reportElement x="425" y="250" width="110" height="20"/>
+				<reportElement x="425" y="270" width="110" height="20"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="12" isBold="true"/>
 				</textElement>
@@ -415,7 +426,7 @@
 				<imageExpression><![CDATA[$P{logoQrImage}]]></imageExpression>
 			</image>
 			<staticText>
-				<reportElement x="20" y="250" width="80" height="20"/>
+				<reportElement x="20" y="250" width="180" height="30"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="9"/>
 				</textElement>

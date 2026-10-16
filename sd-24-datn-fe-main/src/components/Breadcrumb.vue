@@ -210,6 +210,8 @@
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    flex: 0 0 auto;
+    justify-content: flex-end;
   }
   
   .action-btn {
@@ -224,6 +226,7 @@
     transition: all 0.2s ease;
     border: none;
     white-space: nowrap;
+    flex: 0 0 auto;
   }
   
   .action-btn.default {
@@ -306,6 +309,7 @@
   
   .page-title-section {
     flex: 1;
+    min-width: 260px;
   }
   
   .page-title {
@@ -334,6 +338,7 @@
     display: flex;
     gap: 24px;
     flex-wrap: wrap;
+    justify-content: flex-end;
   }
   
   .stat-item {
@@ -444,6 +449,26 @@
   }
   
   /* Responsive Design */
+  @media (max-width: 1200px) {
+    .breadcrumb-content {
+      align-items: flex-start;
+    }
+
+    .breadcrumb-nav,
+    .breadcrumb-actions {
+      flex-basis: 100%;
+    }
+
+    .page-header {
+      flex-direction: column;
+    }
+
+    .page-stats {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+
   @media (max-width: 768px) {
     .breadcrumb-content {
       padding: 12px 16px;

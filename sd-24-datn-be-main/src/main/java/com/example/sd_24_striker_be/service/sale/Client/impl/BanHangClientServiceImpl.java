@@ -171,14 +171,12 @@ public class BanHangClientServiceImpl implements BanHangClientService{
             }
         }
 
-        // Get default employee (ID = 1)
-        NhanVien nhanVien = nhanVienRepository.findById(1)
-                .orElseThrow(() -> new ResourceNotFoundException("Nhân viên mặc định không tồn tại"));
-
         // Create new pending invoice
         HoaDon hoaDon = HoaDon.builder()
                 .idKhachHang(khachHang)
-                .idNhanVien(nhanVien)
+                // Đơn online do khách tạo, chưa có nhân viên xử lý. Nhân viên được gán khi
+                // quản trị xác nhận đơn, tránh hiển thị sai NV001 là người thanh toán.
+                .idNhanVien(null)
                 .ma(generateRandomCode())
                 .tienSanPham(BigDecimal.ZERO)
                 .loaiDon("Online")
@@ -239,7 +237,7 @@ public class BanHangClientServiceImpl implements BanHangClientService{
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         HoaDon moi = hoaDonRepository.save(HoaDon.builder()
                 .idKhachHang(hoaDon.getIdKhachHang())
-                .idNhanVien(hoaDon.getIdNhanVien())
+                .idNhanVien(null)
                 .ma(generateRandomCode())
                 .tienSanPham(BigDecimal.ZERO)
                 .loaiDon("Online")
@@ -760,24 +758,19 @@ public class BanHangClientServiceImpl implements BanHangClientService{
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn có id: " + hoaDonId));
 
         System.out.println("Updating customer info for invoice: " + hoaDonId);
-        System.out.println("Current customer info: " + hoaDon.getTenKhachHang() + ", " + hoaDon.getDiaChiKhachHang());
         
         // Update customer information if provided
         if (request.getTenKhachHang() != null && !request.getTenKhachHang().trim().isEmpty()) {
             hoaDon.setTenKhachHang(request.getTenKhachHang());
-            System.out.println("Updated customer name: " + request.getTenKhachHang());
         }
         if (request.getSoDienThoai() != null && !request.getSoDienThoai().trim().isEmpty()) {
             hoaDon.setSoDienThoaiKhachHang(request.getSoDienThoai());
-            System.out.println("Updated customer phone: " + request.getSoDienThoai());
         }
         if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
             hoaDon.setEmail(request.getEmail());
-            System.out.println("Updated customer email: " + request.getEmail());
         }
         if (request.getDiaChi() != null && !request.getDiaChi().trim().isEmpty()) {
             hoaDon.setDiaChiKhachHang(request.getDiaChi());
-            System.out.println("Updated customer address: " + request.getDiaChi());
         }
         
         // Set voucher if provided
@@ -885,7 +878,7 @@ public class BanHangClientServiceImpl implements BanHangClientService{
         // Create invoice history
         LichSuHoaDon lichSu = LichSuHoaDon.builder()
                 .idHoaDon(hoaDon)
-                .idNhanVien(hoaDon.getIdNhanVien())
+                .idNhanVien(null)
                 .ma("LSHD_" + UUID.randomUUID().toString().substring(0, 8))
                 .hanhDong("Thanh toán hóa đơn qua client (" + paymentRequest.getPhuongThucThanhToan() + ")")
                 .thoiGian(new java.sql.Timestamp(System.currentTimeMillis()))

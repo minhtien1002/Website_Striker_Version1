@@ -30,6 +30,20 @@ public class VNPayConfig {
     @Value("${vnpay.return-url}")
     public String vnp_ReturnUrl;
 
+    public void validatePaymentConfiguration() {
+        List<String> missing = new ArrayList<>();
+        if (isBlank(vnp_PayUrl)) missing.add("vnpay.pay-url");
+        if (isBlank(vnp_TmnCode)) missing.add("VNPAY_TMN_CODE (vnpay.tmn-code)");
+        if (isBlank(vnp_HashSecret)) missing.add("VNPAY_HASH_SECRET (vnpay.hash-secret)");
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException("Thiếu cấu hình VNPay: " + String.join(", ", missing));
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     public static String md5(String message) {
         String digest = null;
         try {

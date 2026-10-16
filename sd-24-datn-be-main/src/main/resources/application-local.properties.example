@@ -1,6 +1,32 @@
 # Copy file nay thanh application-local.properties (cung thu muc) va dien khoa that.
+# Khong commit application-local.properties.
+
+# SQL Server
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=Database_STRIKER_Final;encrypt=true;trustServerCertificate=true;
+spring.datasource.username=
+spring.datasource.password=
+
+# Cloudinary
 cloudinary.cloud-name=
 cloudinary.api-key=
 cloudinary.api-secret=
+
+# VNPay sandbox
 vnpay.tmn-code=
 vnpay.hash-secret=
+
+# Giao Hang Nhanh (de trong neu dung bang gia theo vung)
+ghn.token=
+ghn.shop-id=
+ghn.from-district-id=
+
+# Email SMTP
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+mail.enabled=false
+mail.from.address=

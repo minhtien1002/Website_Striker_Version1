@@ -61,9 +61,6 @@ public class VNPayClientController {
         try {
             System.out.println("=== CLIENT VNPAY CREATE PAYMENT ENDPOINT HIT ===");
             System.out.println("Creating VNPay payment for client - Invoice ID: " + hoaDonId);
-            System.out.println("Payment request: " + paymentRequest);
-            System.out.println("Voucher ID from request: " + paymentRequest.getVoucherId());
-            System.out.println("Voucher ID type: " + (paymentRequest.getVoucherId() != null ? paymentRequest.getVoucherId().getClass().getSimpleName() : "null"));
             
             // Validate payment request
             if (hoaDonId == null) {
@@ -105,7 +102,7 @@ public class VNPayClientController {
             response.put("amount", amount);
             response.put("orderInfo", orderInfo);
 
-            System.out.println("VNPay payment URL created: " + paymentUrl);
+            System.out.println("VNPay payment URL created successfully for invoice: " + hoaDonId);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Error creating VNPay payment: " + e.getMessage());

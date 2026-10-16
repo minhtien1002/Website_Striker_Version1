@@ -160,6 +160,11 @@ public class HoaDonDetailResponse {
         }
 
         public Builder withNhanVienInfo(NhanVien nhanVien) {
+            if (nhanVien == null) {
+                response.maNhanVien = null;
+                response.tenNhanVien = null;
+                return this;
+            }
             response.maNhanVien = nhanVien.getMa();
             response.tenNhanVien = nhanVien.getTenNhanVien();
             return this;

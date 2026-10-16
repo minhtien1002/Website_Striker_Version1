@@ -92,6 +92,21 @@ export const fetchAllCustomers = async (toast, params = {}) => {
   }
 }
 
+// Thống kê phải đếm trên toàn bộ dữ liệu, không được đếm riêng các dòng của trang hiện tại.
+export const fetchCustomerStatusTotals = async () => {
+  const [all, active, inactive] = await Promise.all([
+    khachHangAPI.getAllKhachHang({ page: 0, size: 1 }),
+    khachHangAPI.getAllKhachHang({ page: 0, size: 1, trangThai: true }),
+    khachHangAPI.getAllKhachHang({ page: 0, size: 1, trangThai: false })
+  ])
+
+  return {
+    total: Number(all.totalItems || 0),
+    active: Number(active.totalItems || 0),
+    inactive: Number(inactive.totalItems || 0)
+  }
+}
+
 export const createCustomer = async (customerData, toast) => {
   if (!validateCustomer(customerData, toast)) return null
 

@@ -103,7 +103,7 @@
 .table th, .table td { text-align: left; }
 
 /* ---------- Nút trong cột "Hành động" (dùng chung màn cũ .action-btn và màn mới .ui-btn.icon) ---------- */
-.ui-table td .ui-btn.icon, .action-btn {
+.ui-table td .ui-btn.icon, .ui-table td .action-btn {
   --act-bg: #f3f4f6; --act-fg: #374151; --act-solid: #374151;
   width: 34px !important; height: 34px !important; min-width: 34px; padding: 0 !important;
   display: inline-flex !important; align-items: center; justify-content: center;

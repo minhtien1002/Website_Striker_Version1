@@ -76,6 +76,7 @@ public class InHoaDonService {
                     hinhThucThanhToanStr = String.join(", ", paymentMethods);
                 }
                 parameters.put("hinhThucThanhToan", hinhThucThanhToanStr);
+                parameters.put("phiVanChuyen", hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO);
 
                 // Tính tổng tiền từ chi tiết sản phẩm (đơn giá * số lượng)
                 BigDecimal tongTien = BigDecimal.ZERO;

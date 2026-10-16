@@ -140,7 +140,8 @@ GO
 CREATE TABLE [dbo].[hoa_don] (
     [id] int IDENTITY(1,1) NOT NULL,
     [id_khach_hang] int NOT NULL,
-    [id_nhan_vien] int NOT NULL,
+    -- Giỏ/đơn online chưa được nhân viên xác nhận chưa có người xử lý.
+    [id_nhan_vien] int NULL,
     [id_phieu_giam_gia] int NULL,
     [ma] nvarchar(255) NULL,
     [tien_san_pham] decimal(18, 2) NOT NULL,
@@ -212,7 +213,8 @@ CREATE TABLE [dbo].[lich_su_hoa_don] (
     [ma] nvarchar(255) NULL,
     [hanh_dong] nvarchar(255) NULL,
     [thoi_gian] datetimeoffset(6) NULL,
-    [deleted] bit NULL,
+    -- Trạng thái hóa đơn sau thao tác (0-10), không phải cờ xóa mềm.
+    [deleted] smallint NULL,
     [ghi_chu] nvarchar(500) NULL,
     CONSTRAINT [PK__lich_su___3213E83F6C1D8441] PRIMARY KEY CLUSTERED ([id])
 );

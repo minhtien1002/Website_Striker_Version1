@@ -53,7 +53,55 @@ public class PhiVanChuyenService {
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private final ObjectMapper om = new ObjectMapper();
 
-    public record KetQua(BigDecimal phiVanChuyen, String nguon, String tinhThanh) {
+    public static class KetQua {
+        private BigDecimal phiVanChuyen;
+        private String nguon;
+        private String tinhThanh;
+
+        public KetQua() {
+        }
+
+        public KetQua(BigDecimal phiVanChuyen, String nguon, String tinhThanh) {
+            this.phiVanChuyen = phiVanChuyen;
+            this.nguon = nguon;
+            this.tinhThanh = tinhThanh;
+        }
+
+        public BigDecimal phiVanChuyen() {
+            return phiVanChuyen;
+        }
+
+        public String nguon() {
+            return nguon;
+        }
+
+        public String tinhThanh() {
+            return tinhThanh;
+        }
+
+        public BigDecimal getPhiVanChuyen() {
+            return phiVanChuyen;
+        }
+
+        public void setPhiVanChuyen(BigDecimal phiVanChuyen) {
+            this.phiVanChuyen = phiVanChuyen;
+        }
+
+        public String getNguon() {
+            return nguon;
+        }
+
+        public void setNguon(String nguon) {
+            this.nguon = nguon;
+        }
+
+        public String getTinhThanh() {
+            return tinhThanh;
+        }
+
+        public void setTinhThanh(String tinhThanh) {
+            this.tinhThanh = tinhThanh;
+        }
     }
 
     public KetQua tinhPhi(String diaChi, int soLuongSanPham) {

@@ -13,6 +13,7 @@ import com.example.sd_24_striker_be.exception.ResourceNotFoundException;
 import com.example.sd_24_striker_be.modal.bill.HoaDon;
 import com.example.sd_24_striker_be.modal.bill.HoaDonChiTiet;
 import com.example.sd_24_striker_be.modal.bill.LichSuHoaDon;
+import com.example.sd_24_striker_be.modal.account.NhanVien;
 import com.example.sd_24_striker_be.modal.product.ChiTietSanPham;
 import com.example.sd_24_striker_be.modal.sell.HinhThucThanhToan;
 import com.example.sd_24_striker_be.modal.sell.PhuongThucThanhToan;
@@ -224,6 +225,17 @@ public class HoaDonServiceImpl implements HoaDonService {
         // tạo ra tồn kho âm.
         boolean wasDeducted = HoaDonStatus.isStockDeducted(currentStatus);
         boolean willBeDeducted = HoaDonStatus.isStockDeducted(trangThai);
+
+        NhanVien nhanVienThucHien = idNhanVien != null
+                ? nhanVienRepository.findById(idNhanVien)
+                    .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"))
+                : null;
+
+        // Với đơn online, người xác nhận đầu tiên là nhân viên chịu trách nhiệm xử lý đơn.
+        if (currentStatus != null && currentStatus == HoaDonStatus.CHO_XAC_NHAN && nhanVienThucHien != null) {
+            hoaDon.setIdNhanVien(nhanVienThucHien);
+        }
+
         if (!wasDeducted && willBeDeducted) {
             deductStockForHoaDon(hoaDon);
         }
@@ -242,10 +254,7 @@ public class HoaDonServiceImpl implements HoaDonService {
         lichSuHoaDon.setGhiChu(ghiChu != null && !ghiChu.isBlank() ? ghiChu.trim() : null);
         
         lichSuHoaDon.setThoiGian(new java.sql.Timestamp(System.currentTimeMillis()));
-        lichSuHoaDon.setIdNhanVien(idNhanVien != null ?
-                nhanVienRepository.findById(idNhanVien)
-                        .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"))
-                : null);
+        lichSuHoaDon.setIdNhanVien(nhanVienThucHien);
         lichSuHoaDon.setIdHoaDon(hoaDon);
         // Lưu trạng thái mới sau khi chuyển để timeline có thể filter chính xác
         lichSuHoaDon.setDeleted(trangThai);

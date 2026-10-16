@@ -32,7 +32,41 @@ public abstract class ThuocTinhController<T extends ThuocTinh> {
         this.service = service;
     }
 
-    public record ThuocTinhRequest(String ten, String moTa) {
+    public static class ThuocTinhRequest {
+        private String ten;
+        private String moTa;
+
+        public ThuocTinhRequest() {
+        }
+
+        public ThuocTinhRequest(String ten, String moTa) {
+            this.ten = ten;
+            this.moTa = moTa;
+        }
+
+        public String ten() {
+            return ten;
+        }
+
+        public String moTa() {
+            return moTa;
+        }
+
+        public String getTen() {
+            return ten;
+        }
+
+        public void setTen(String ten) {
+            this.ten = ten;
+        }
+
+        public String getMoTa() {
+            return moTa;
+        }
+
+        public void setMoTa(String moTa) {
+            this.moTa = moTa;
+        }
     }
 
     @GetMapping

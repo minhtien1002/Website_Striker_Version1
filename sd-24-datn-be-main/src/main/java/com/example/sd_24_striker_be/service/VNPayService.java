@@ -22,6 +22,10 @@ public class VNPayService {
     private HoaDonServiceImpl hoaDonService;
 
     public String createOrder(HttpServletRequest request, long amount, String orderInfo, String urlReturn, String idHD) {
+        vnPayConfig.validatePaymentConfiguration();
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Số tiền thanh toán VNPay phải lớn hơn 0");
+        }
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         // Embed idHD into vnp_TxnRef to make the process stateless
@@ -81,12 +85,16 @@ public class VNPayService {
         }
         String queryUrl = query.toString();
         String vnp_SecureHash = VNPayConfig.hmacSHA512(vnPayConfig.vnp_HashSecret, hashData.toString());
+        if (vnp_SecureHash.isBlank()) {
+            throw new IllegalStateException("Không thể tạo chữ ký VNPay; kiểm tra VNPAY_HASH_SECRET");
+        }
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         return vnPayConfig.vnp_PayUrl + "?" + queryUrl;
     }
 
     public String orderReturn(HttpServletRequest request) {
         try {
+            vnPayConfig.validatePaymentConfiguration();
             Map<String, String> fields = new HashMap<>();
             for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
                 String fieldName = params.nextElement();

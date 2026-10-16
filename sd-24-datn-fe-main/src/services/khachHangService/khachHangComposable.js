@@ -19,6 +19,7 @@ import {
 } from './khachHangFilters.js'
 import { 
   fetchAllCustomers, 
+  fetchCustomerStatusTotals,
   createCustomer, 
   updateCustomer, 
   toggleCustomerStatus, 
@@ -46,6 +47,7 @@ export function useKhachHangLogic() {
   const pageSize = ref(khachHangConfig.pagination.defaultPageSize)
   const activeTab = ref('all')
   const isLoadingData = ref(false)
+  const statusTotals = ref({ total: 0, active: 0, inactive: 0 })
 
   // Form data
   const newCustomer = ref(resetCustomerForm())
@@ -87,23 +89,20 @@ export function useKhachHangLogic() {
   })
 
   const pageStats = computed(() => {
-    const totalCustomers = apiResponse.value?.totalElements || allCustomers.value.length
-    const currentCustomers = filteredCustomers.value
-    
     return [
       {
         icon: 'solar:users-group-two-rounded-bold',
-        value: totalCustomers,
+        value: statusTotals.value.total,
         label: 'Tổng khách hàng'
       },
       {
         icon: 'solar:check-circle-bold',
-        value: currentCustomers.filter(customer => customer.trangThai).length,
+        value: statusTotals.value.active,
         label: 'Hoạt động'
       },
       {
         icon: 'solar:close-circle-bold',
-        value: currentCustomers.filter(customer => !customer.trangThai).length,
+        value: statusTotals.value.inactive,
         label: 'Ngừng hoạt động'
       }
     ]
@@ -133,6 +132,7 @@ export function useKhachHangLogic() {
       )
       
       const response = await fetchAllCustomers(toast, params)
+      statusTotals.value = await fetchCustomerStatusTotals()
       
       if (response.content) {
         // Using real API data
