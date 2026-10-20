@@ -22,6 +22,10 @@ public class PhieuGiamGiaDetailResponse {
     private Double soTienGiamToiDa;
     private Double hoaDonToiThieu;
     private Integer soLuongDung;
+    private String loaiApDung;
+    private Integer soLuongPhatHanh;
+    private Integer soLuotDaDung;
+    private Integer gioiHanMoiKhach;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
     private Boolean trangThai;

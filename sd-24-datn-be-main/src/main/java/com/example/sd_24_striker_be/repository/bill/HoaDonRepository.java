@@ -93,6 +93,11 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     @Query("SELECT COUNT(h) FROM HoaDon h WHERE h.idPhieuGiamGia.id = :id AND h.trangThai NOT IN (0, 6)")
     Long countDaDungPhieu(@Param("id") Integer id);
 
+    @Query("SELECT COUNT(h) FROM HoaDon h WHERE h.idPhieuGiamGia.id = :voucherId " +
+           "AND h.idKhachHang.id = :customerId AND h.trangThai IN (2, 3, 4, 5, 7)")
+    Long countVoucherUsageByCustomer(@Param("voucherId") Integer voucherId,
+                                     @Param("customerId") Integer customerId);
+
     // Tìm hóa đơn theo mã
     @Query("SELECT hd FROM HoaDon hd WHERE hd.ma = :ma")
     Optional<HoaDon> findByMa(@Param("ma") String ma);

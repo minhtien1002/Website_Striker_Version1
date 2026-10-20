@@ -32,12 +32,13 @@ public class VNPayController {
     public ResponseEntity<?> createVNPayPayment(HttpServletRequest request, @RequestBody PaymentRequest paymentRequest) {
         try {
             // Validate payment request
-            if (paymentRequest.getInvoiceId() == null || paymentRequest.getAmount() == null) {
-                return ResponseEntity.badRequest().body("Invoice ID and amount are required");
+            if (paymentRequest.getInvoiceId() == null) {
+                return ResponseEntity.badRequest().body("Invoice ID is required");
             }
 
-            // Convert amount to long (VNPay expects amount in VND)
-            long amount = paymentRequest.getAmount().longValue();
+            // Không tin số tiền từ frontend. Tổng được tính lại từ giỏ hàng và voucher
+            // trong DB; callback cũng kiểm tra lại đúng số tiền này.
+            long amount = hoaDonService.calculatePendingInvoiceTotal(paymentRequest.getInvoiceId()).longValueExact();
             String orderInfo = "Thanh toan hoa don " + paymentRequest.getInvoiceId();
             String returnUrl = "http://localhost:8080/api/payment/vnpay-return";
             String invoiceId = paymentRequest.getInvoiceId().toString();
@@ -78,34 +79,10 @@ public class VNPayController {
 
     @PostMapping("/vnpay/process-combined")
     public ResponseEntity<?> processCombinedPayment(HttpServletRequest request, @RequestBody PaymentRequest paymentRequest) {
-        try {
-            // Validate payment request for combined payment
-            if (paymentRequest.getInvoiceId() == null || 
-                paymentRequest.getVnpayAmount() == null || 
-                paymentRequest.getCashAmount() == null) {
-                return ResponseEntity.badRequest().body("Invoice ID, VNPay amount, and cash amount are required");
-            }
-
-            // Process cash payment first
-            hoaDonService.processCashPayment(paymentRequest.getInvoiceId(), paymentRequest.getCashAmount());
-
-            // Create VNPay payment for remaining amount
-            long vnpayAmount = paymentRequest.getVnpayAmount().longValue();
-            String orderInfo = "Thanh toan ket hop hoa don " + paymentRequest.getInvoiceId();
-            String returnUrl = "http://localhost:8080/api/payment/vnpay-return";
-            String invoiceId = paymentRequest.getInvoiceId().toString();
-
-            String paymentUrl = vnPayService.createOrder(request, vnpayAmount, orderInfo, returnUrl, invoiceId);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("paymentUrl", paymentUrl);
-            response.put("invoiceId", invoiceId);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing combined payment: " + e.getMessage());
-        }
+        // Luồng cũ ghi tiền mặt trước khi VNPay thành công rồi callback lại ghi toàn bộ
+        // thành chuyển khoản, làm dữ liệu thu tiền bị trùng. Chặn đến khi có giao dịch
+        // pending và cơ chế commit/rollback hai pha đúng nghĩa.
+        return ResponseEntity.badRequest()
+                .body("Thanh toán kết hợp tiền mặt + VNPay chưa được hỗ trợ an toàn");
     }
 }

@@ -667,7 +667,9 @@ public class HoaDonServiceImpl implements HoaDonService {
                 // 1. Update invoice status to completed
                 hoaDon.setTrangThai((short) 5); // Đã hoàn thành
                 hoaDon.setDeleted(false); // Mark as active invoice
-                hoaDon.setUpdatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+                java.sql.Timestamp paidAt = new java.sql.Timestamp(System.currentTimeMillis());
+                hoaDon.setUpdatedAt(paidAt);
+                hoaDon.setNgayThanhToan(paidAt);
 
                 // 2. Create invoice details (HoaDonChiTiet) from cart data
                 Optional<GioHang> gioHangOpt = gioHangRepository.findByHoaDonId(hoaDon.getId());
@@ -750,11 +752,18 @@ public class HoaDonServiceImpl implements HoaDonService {
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với ID: " + invoiceId));
 
             if (status == 1) {
+                BigDecimal expectedAmount = calculatePendingInvoiceTotal(invoiceId);
+                BigDecimal callbackAmount = BigDecimal.valueOf(vnpayAmount);
+                if (expectedAmount.compareTo(callbackAmount) != 0) {
+                    throw new RuntimeException("Số tiền VNPay không khớp tổng hóa đơn");
+                }
                 // Payment successful - process like cash payment
                 // 1. Update invoice status to completed
                 hoaDon.setTrangThai((short) 5); // Đã hoàn thành
                 hoaDon.setDeleted(false); // Mark as active invoice
-                hoaDon.setUpdatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+                java.sql.Timestamp vnpayPaidAt = new java.sql.Timestamp(System.currentTimeMillis());
+                hoaDon.setUpdatedAt(vnpayPaidAt);
+                hoaDon.setNgayThanhToan(vnpayPaidAt);
 
                 // 2. Create invoice details (HoaDonChiTiet) from cart data
                 Optional<GioHang> gioHangOpt = gioHangRepository.findByHoaDonId(hoaDon.getId());
@@ -782,9 +791,13 @@ public class HoaDonServiceImpl implements HoaDonService {
                     deductStockForHoaDon(hoaDon);
 
                     // Update invoice totals with VNPay amount
-                    BigDecimal vnpayAmountBD = BigDecimal.valueOf(vnpayAmount);
-                    hoaDon.setTienSanPham(vnpayAmountBD);
-                    hoaDon.setTongTien(vnpayAmountBD);
+                    BigDecimal vnpayAmountBD = expectedAmount;
+                    BigDecimal tienSanPham = gioHangChiTietList.stream()
+                            .map(item -> item.getGia().multiply(BigDecimal.valueOf(item.getSoLuong())))
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    hoaDon.setTienSanPham(tienSanPham);
+                    hoaDon.setPhiVanChuyen(BigDecimal.ZERO);
+                    hoaDon.setTongTien(tienSanPham);
                     hoaDon.setTongTienSauGiam(vnpayAmountBD);
                     
                     // 3. Create VNPay payment record with actual VNPay amount
@@ -826,6 +839,45 @@ public class HoaDonServiceImpl implements HoaDonService {
         } catch (Exception e) {
             throw new RuntimeException("Lỗi cập nhật trạng thái hóa đơn VNPay: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Tính số tiền phải trả cho hóa đơn chờ tại quầy từ dữ liệu DB. Không nhận tổng tiền
+     * do frontend gửi lên để tránh tạo URL/callback VNPay với số tiền tùy ý.
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal calculatePendingInvoiceTotal(Integer invoiceId) {
+        HoaDon hoaDon = hoaDonRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với ID: " + invoiceId));
+        if (hoaDon.getTrangThai() == null || hoaDon.getTrangThai() != HoaDonStatus.HOA_DON_CHO) {
+            throw new RuntimeException("Hóa đơn không ở trạng thái chờ thanh toán");
+        }
+        GioHang gioHang = gioHangRepository.findByHoaDonId(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giỏ hàng cho hóa đơn này"));
+        List<GioHangChiTiet> items = gioHangChiTietRepository.findByGioHangId(gioHang.getId());
+        if (items.isEmpty()) {
+            throw new RuntimeException("Giỏ hàng trống, không thể thanh toán");
+        }
+        // Giá trong giỏ đã do backend chốt lúc thêm/cập nhật sản phẩm. Dùng đúng snapshot
+        // này để URL tạo trước và callback sau đó không lệch nhau nếu chương trình giảm giá
+        // đổi trong thời gian khách đang ở cổng thanh toán.
+        BigDecimal subtotal = items.stream()
+                .map(item -> item.getGia().multiply(BigDecimal.valueOf(item.getSoLuong())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal discount = BigDecimal.ZERO;
+        if (hoaDon.getIdPhieuGiamGia() != null) {
+            String validationError = VoucherCalculator.validate(hoaDon.getIdPhieuGiamGia(), subtotal);
+            if (validationError != null) {
+                throw new RuntimeException(validationError);
+            }
+            phieuGiamGiaServices.kiemTraQuyenSuDung(hoaDon.getIdPhieuGiamGia(), hoaDon.getIdKhachHang());
+            discount = VoucherCalculator.discountAmount(hoaDon.getIdPhieuGiamGia(), subtotal);
+        }
+        BigDecimal total = subtotal.subtract(discount);
+        if (total.signum() <= 0) {
+            throw new RuntimeException("Số tiền thanh toán phải lớn hơn 0");
+        }
+        return total;
     }
 
     @Override

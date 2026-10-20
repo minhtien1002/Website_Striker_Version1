@@ -106,8 +106,11 @@
             <dt>Loại giảm</dt><dd>{{ isPhanTram(detail) ? 'Phần trăm' : 'Số tiền cố định' }}</dd>
             <dt>Mức giảm</dt><dd>{{ mucGiam(detail) }}</dd>
             <dt>Đơn tối thiểu</dt><dd>{{ formatMoney(detail.hoaDonToiThieu || 0) }}</dd>
+            <dt>Áp dụng cho</dt><dd>{{ detail.loaiApDung === 'PHI_VAN_CHUYEN' ? 'Phí vận chuyển' : 'Tiền hàng' }}</dd>
+            <dt>Số lượng phát hành</dt><dd>{{ detail.soLuongPhatHanh ?? detail.soLuongDung ?? 'Không giới hạn' }}</dd>
             <dt>Số lượt còn lại</dt><dd>{{ detail.soLuongDung ?? 'Không giới hạn' }}</dd>
-            <dt>Đã được dùng</dt><dd>{{ detail.soLanDaDung ?? 0 }} hóa đơn</dd>
+            <dt>Đã được dùng</dt><dd>{{ detail.soLuotDaDung ?? detail.soLanDaDung ?? 0 }} lần</dd>
+            <dt>Giới hạn mỗi khách</dt><dd>{{ detail.gioiHanMoiKhach ?? 'Không giới hạn' }}</dd>
             <dt>Ngày bắt đầu</dt><dd>{{ formatDate(detail.ngayBatDau) }}</dd>
             <dt>Ngày kết thúc</dt><dd>{{ formatDate(detail.ngayKetThuc) }}</dd>
             <dt>Trạng thái</dt><dd>{{ detail.trangThai ? 'Hoạt động' : 'Ngừng hoạt động' }} · {{ TINH_TRANG[tinhTrang(detail)] }}</dd>

@@ -21,6 +21,10 @@ public final class VoucherCalculator {
         return "PHAN_TRAM".equalsIgnoreCase(loai) || "PERCENTAGE".equalsIgnoreCase(loai);
     }
 
+    public static boolean isShippingVoucher(PhieuGiamGia voucher) {
+        return "PHI_VAN_CHUYEN".equalsIgnoreCase(voucher.getLoaiApDung());
+    }
+
     public static BigDecimal minOrderAmount(PhieuGiamGia voucher) {
         return voucher.getHoaDonToiThieu() != null ? BigDecimal.valueOf(voucher.getHoaDonToiThieu()) : BigDecimal.ZERO;
     }
@@ -62,10 +66,18 @@ public final class VoucherCalculator {
 
     /** Số tiền giảm (không vượt quá giá trị đơn), làm tròn xuống như màn hình bán hàng. */
     public static BigDecimal discountAmount(PhieuGiamGia voucher, BigDecimal orderAmount) {
+        return discountAmount(voucher, orderAmount, BigDecimal.ZERO);
+    }
+
+    /** Tính giảm trên đúng phạm vi: tiền hàng hoặc phí vận chuyển. */
+    public static BigDecimal discountAmount(PhieuGiamGia voucher, BigDecimal orderAmount, BigDecimal shippingFee) {
+        BigDecimal baseAmount = isShippingVoucher(voucher)
+                ? (shippingFee == null ? BigDecimal.ZERO : shippingFee)
+                : (orderAmount == null ? BigDecimal.ZERO : orderAmount);
         BigDecimal discount;
         if (isPercentage(voucher)) {
             double percent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
-            discount = orderAmount.multiply(BigDecimal.valueOf(percent))
+            discount = baseAmount.multiply(BigDecimal.valueOf(percent))
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
             if (voucher.getSoTienGiamToiDa() != null) {
                 discount = discount.min(BigDecimal.valueOf(voucher.getSoTienGiamToiDa()));
@@ -73,6 +85,6 @@ public final class VoucherCalculator {
         } else {
             discount = fixedAmount(voucher);
         }
-        return discount.min(orderAmount).max(BigDecimal.ZERO);
+        return discount.min(baseAmount).max(BigDecimal.ZERO);
     }
 }

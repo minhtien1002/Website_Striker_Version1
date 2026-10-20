@@ -30,6 +30,13 @@
             </select>
           </div>
           <div class="ui-field">
+            <label>Áp dụng cho <span class="req">*</span></label>
+            <select v-model="f.loaiApDung" class="ui-select">
+              <option value="DON_HANG">Tiền hàng</option>
+              <option value="PHI_VAN_CHUYEN">Phí vận chuyển</option>
+            </select>
+          </div>
+          <div class="ui-field">
             <label>{{ f.loai === 'PHAN_TRAM' ? 'Phần trăm giảm (%)' : 'Số tiền giảm (đ)' }} <span class="req">*</span></label>
             <input v-model="f.giaTri" type="number" class="ui-input" :class="{ invalid: e.giaTri }" :min="f.loai === 'PHAN_TRAM' ? 1 : 1000" :max="f.loai === 'PHAN_TRAM' ? 100 : undefined" />
             <span v-if="e.giaTri" class="ui-error">{{ e.giaTri }}</span>
@@ -45,9 +52,13 @@
             <span v-if="e.toiThieu" class="ui-error">{{ e.toiThieu }}</span>
           </div>
           <div class="ui-field">
-            <label>Số lượt sử dụng <span class="req">*</span></label>
+            <label>Số lượng phát hành <span class="req">*</span></label>
             <input v-model="f.soLuong" type="number" min="1" class="ui-input" :class="{ invalid: e.soLuong }" />
             <span v-if="e.soLuong" class="ui-error">{{ e.soLuong }}</span>
+          </div>
+          <div class="ui-field">
+            <label>Giới hạn mỗi khách</label>
+            <input v-model="f.gioiHanMoiKhach" type="number" min="1" class="ui-input" placeholder="Để trống: không giới hạn" />
           </div>
           <div class="ui-field">
             <label>Ngày bắt đầu <span class="req">*</span></label>
@@ -107,7 +118,7 @@ const toast = useToast()
 const { confirm } = useConfirm()
 
 const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
-const f = reactive({ ma: '', ten: '', loai: 'PHAN_TRAM', giaTri: '', toiDa: '', toiThieu: 0, soLuong: '', batDau: today, ketThuc: '', moTa: '', riengTu: false })
+const f = reactive({ ma: '', ten: '', loai: 'PHAN_TRAM', loaiApDung: 'DON_HANG', giaTri: '', toiDa: '', toiThieu: 0, soLuong: '', gioiHanMoiKhach: '', batDau: today, ketThuc: '', moTa: '', riengTu: false })
 const e = reactive({})
 const customers = ref([])
 const selected = ref([])
@@ -136,6 +147,7 @@ const validate = () => {
   else if (f.loai !== 'PHAN_TRAM' && tt > 0 && gt >= tt) e.toiThieu = 'Đơn tối thiểu phải lớn hơn số tiền giảm'
   const sl = Number(f.soLuong)
   if (f.soLuong === '' || !Number.isInteger(sl) || sl < 1 || sl > 100000) e.soLuong = 'Số lượt từ 1 đến 100.000'
+  if (f.gioiHanMoiKhach !== '' && (!Number.isInteger(Number(f.gioiHanMoiKhach)) || Number(f.gioiHanMoiKhach) < 1 || Number(f.gioiHanMoiKhach) > sl)) e.gioiHanMoiKhach = 'Giới hạn mỗi khách từ 1 đến số lượng phát hành'
   if (!f.batDau) e.batDau = 'Chọn ngày bắt đầu'
   else if (f.batDau < today) e.batDau = 'Ngày bắt đầu không được trước hôm nay'
   if (!f.ketThuc) e.ketThuc = 'Chọn ngày kết thúc'
@@ -150,7 +162,7 @@ const save = async () => {
   const ok = await confirm({
     title: 'Thêm phiếu giảm giá?',
     message: 'Sau khi tạo, phiếu không thể sửa hay xóa.',
-    details: [`Tên: ${f.ten.trim()}`, `Mức giảm: ${muc}`, `Đơn tối thiểu: ${formatMoney(f.toiThieu)}`, `Số lượt: ${f.soLuong}`,
+    details: [`Tên: ${f.ten.trim()}`, `Mức giảm: ${muc}`, `Áp dụng: ${f.loaiApDung === 'PHI_VAN_CHUYEN' ? 'Phí vận chuyển' : 'Tiền hàng'}`, `Đơn tối thiểu: ${formatMoney(f.toiThieu)}`, `Phát hành: ${f.soLuong}`,
       `Thời gian: ${f.batDau} → ${f.ketThuc}`, f.riengTu ? `Riêng tư - ${selected.value.length} khách hàng` : 'Công khai'],
     confirmText: 'Thêm'
   })
@@ -166,6 +178,8 @@ const save = async () => {
       soTienGiamToiDa: phanTram ? Number(f.toiDa) : Number(f.giaTri),
       hoaDonToiThieu: Number(f.toiThieu),
       soLuongDung: Number(f.soLuong),
+      loaiApDung: f.loaiApDung,
+      gioiHanMoiKhach: f.gioiHanMoiKhach === '' ? null : Number(f.gioiHanMoiKhach),
       ngayBatDau: f.batDau,
       ngayKetThuc: f.ketThuc,
       riengTu: f.riengTu,

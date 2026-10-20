@@ -10,6 +10,8 @@ public class PhieuGiamGiaDTO {
     private Double soTienGiamToiDa;
     private Double hoaDonToiThieu;
     private Integer soLuongDung;
+    private String loaiApDung;
+    private Integer gioiHanMoiKhach;
     private String ngayBatDau; // Changed from Instant to String
     private String ngayKetThuc; // Changed from Instant to String
     private Boolean riengTu;
@@ -74,6 +76,11 @@ public class PhieuGiamGiaDTO {
     public void setSoLuongDung(Integer soLuongDung) {
         this.soLuongDung = soLuongDung;
     }
+
+    public String getLoaiApDung() { return loaiApDung; }
+    public void setLoaiApDung(String loaiApDung) { this.loaiApDung = loaiApDung; }
+    public Integer getGioiHanMoiKhach() { return gioiHanMoiKhach; }
+    public void setGioiHanMoiKhach(Integer gioiHanMoiKhach) { this.gioiHanMoiKhach = gioiHanMoiKhach; }
 
     public String getNgayBatDau() {
         return ngayBatDau;

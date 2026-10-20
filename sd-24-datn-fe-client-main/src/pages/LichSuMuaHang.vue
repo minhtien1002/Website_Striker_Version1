@@ -284,7 +284,6 @@
               <div class="st-detail-block st-detail-block--accent">
                 <h6 class="st-detail-block__title">Chi tiết thanh toán</h6>
                 <div class="st-rows">
-                  <div class="st-row"><span class="st-row__label">Tạm tính:</span><span class="st-row__value">{{ formatCurrency(order.subtotal) }}</span></div>
                   <div v-if="order.shippingFee > 0" class="st-row"><span class="st-row__label">Phí vận chuyển:</span><span class="st-row__value">{{ formatCurrency(order.shippingFee) }}</span></div>
                   <div v-if="order.discount > 0" class="st-row"><span class="st-row__label">Giảm giá:</span><span class="st-row__value st-row__value--done">-{{ formatCurrency(order.discount) }}</span></div>
                   <div class="st-row st-row--total"><span>Tổng thanh toán:</span><span class="st-row__grand">{{ formatCurrency(order.total) }}</span></div>

@@ -56,6 +56,7 @@ public interface PhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, Inte
     // các quan hệ lazy của hóa đơn (NhanVien...) lỗi "no session".
     @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true)
     @Query("UPDATE PhieuGiamGia p SET p.soLuongDung = p.soLuongDung - 1, " +
+           "p.soLuotDaDung = COALESCE(p.soLuotDaDung, 0) + 1, " +
            "p.trangThai = CASE WHEN p.soLuongDung - 1 <= 0 THEN false ELSE p.trangThai END " +
            "WHERE p.id = :id AND p.soLuongDung > 0")
     int truMotLuotSuDung(@Param("id") Integer id);

@@ -60,8 +60,9 @@ public class PhieuGiamGiaController {
     /** Phiếu dùng được cho đơn, phiếu giảm nhiều nhất đứng đầu (bán tại quầy tự chọn phiếu tốt nhất). */
     @GetMapping("/kha-dung")
     public List<java.util.Map<String, Object>> getPhieuKhaDung(@RequestParam java.math.BigDecimal tongTien,
+                                                               @RequestParam(required = false) java.math.BigDecimal phiVanChuyen,
                                                                @RequestParam(required = false) Integer khachHangId) {
-        return phieuGiamGiaService.getPhieuKhaDung(tongTien, khachHangId);
+        return phieuGiamGiaService.getPhieuKhaDung(tongTien, phiVanChuyen, khachHangId);
     }
 
     @GetMapping("/detail/{id}")

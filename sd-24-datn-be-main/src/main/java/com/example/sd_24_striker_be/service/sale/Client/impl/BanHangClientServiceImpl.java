@@ -632,8 +632,7 @@ public class BanHangClientServiceImpl implements BanHangClientService{
                              ", Cash: " + hinhThuc.getTienMat() + 
                              ", Transfer: " + hinhThuc.getTienChuyenKhoan());
         } catch (Exception e) {
-            System.err.println("Error creating payment method: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Không thể lưu hình thức thanh toán: " + e.getMessage(), e);
         }
     }
 

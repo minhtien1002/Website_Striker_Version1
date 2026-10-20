@@ -4,6 +4,7 @@ import com.example.sd_24_striker_be.config.VNPayConfig;
 import com.example.sd_24_striker_be.dto.sell.request.ClientPaymentRequest;
 import com.example.sd_24_striker_be.modal.bill.HoaDon;
 import com.example.sd_24_striker_be.repository.bill.HoaDonRepository;
+import com.example.sd_24_striker_be.repository.sell.HinhThucThanhToanRepository;
 import com.example.sd_24_striker_be.service.VNPayService;
 import com.example.sd_24_striker_be.service.sale.Client.impl.BanHangClientService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,9 @@ public class VNPayClientController {
 
     @Autowired
     private HoaDonRepository hoaDonRepository;
+
+    @Autowired
+    private HinhThucThanhToanRepository hinhThucThanhToanRepository;
 
     @Value("${client.frontend.url:http://localhost:5173}")
     private String clientFrontendUrl;
@@ -168,12 +172,6 @@ public class VNPayClientController {
      */
     private String processClientVNPayReturn(HttpServletRequest request) {
         try {
-            // Debug: Print all parameters
-            System.out.println("=== CLIENT VNPAY RETURN DEBUG ===");
-            request.getParameterNames().asIterator().forEachRemaining(paramName -> {
-                System.out.println(paramName + " = " + request.getParameter(paramName));
-            });
-
             // Xác thực chữ ký VNPay (vnp_SecureHash) trước khi tin bất kỳ tham số nào từ
             // request - trước đây route này đọc thẳng vnp_TransactionStatus/vnp_ResponseCode
             // mà không kiểm tra chữ ký, cho phép giả mạo callback "thanh toán thành công".
@@ -207,14 +205,28 @@ public class VNPayClientController {
                     Integer hoaDonId = Integer.parseInt(invoiceId);
 
                     Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(hoaDonId);
-                    Short currentStatus = hoaDonOpt.map(HoaDon::getTrangThai).orElse(null);
-                    if (currentStatus != null && currentStatus != 0 && currentStatus != com.example.sd_24_striker_be.common.bill.HoaDonStatus.DA_HUY) {
+                    if (hoaDonOpt.isEmpty()) {
+                        System.err.println("CLIENT: Invoice does not exist: " + invoiceId);
+                        return null;
+                    }
+                    HoaDon hoaDon = hoaDonOpt.get();
+                    if (!paymentAmountMatches(hoaDon.getTongTienSauGiam(), request.getParameter("vnp_Amount"))) {
+                        System.err.println("CLIENT: VNPay amount does not match invoice total for invoice " + invoiceId);
+                        return null;
+                    }
+
+                    Short currentStatus = hoaDon.getTrangThai();
+                    if (currentStatus != null && currentStatus != 0) {
                         // Hóa đơn đã được xử lý thành công từ trước (VNPay có thể gọi lại
-                        // callback này nhiều lần) - coi là thành công, KHÔNG gọi lại
-                        // thanhToan() để tránh lỗi "không phải hóa đơn chờ". Không áp dụng
-                        // cho đơn đã bị hủy (vd hết hạn giữ giỏ hàng) - phải báo lỗi thật.
-                        System.out.println("CLIENT: Invoice " + invoiceId + " already processed (trangThai=" + currentStatus + ") - treating as success");
-                        return invoiceId;
+                        // callback này nhiều lần). Chỉ coi là idempotent khi DB đã có đúng
+                        // bản ghi VNPay với đúng số tiền.
+                        if (hinhThucThanhToanRepository.existsSuccessfulVNPayPayment(
+                                hoaDonId, hoaDon.getTongTienSauGiam())) {
+                            System.out.println("CLIENT: Invoice " + invoiceId + " already paid by VNPay - idempotent success");
+                            return invoiceId;
+                        }
+                        System.err.println("CLIENT: Invoice " + invoiceId + " is not pending and has no matching VNPay payment");
+                        return null;
                     }
 
                     // Simply complete the payment - let the service preserve existing customer data
@@ -247,6 +259,18 @@ public class VNPayClientController {
             System.err.println("CLIENT: Error processing VNPay return: " + e.getMessage());
             e.printStackTrace();
             return null;
+        }
+    }
+
+    static boolean paymentAmountMatches(BigDecimal expectedAmount, String rawVnpAmount) {
+        if (expectedAmount == null || rawVnpAmount == null || rawVnpAmount.isBlank()) {
+            return false;
+        }
+        try {
+            BigDecimal paidAmount = new BigDecimal(rawVnpAmount).movePointLeft(2);
+            return expectedAmount.compareTo(paidAmount) == 0;
+        } catch (NumberFormatException ex) {
+            return false;
         }
     }
 
@@ -297,34 +321,40 @@ public class VNPayClientController {
     @GetMapping("/vnpay/status/{hoaDonId}")
     public ResponseEntity<?> getPaymentStatus(@PathVariable Integer hoaDonId) {
         try {
-            // Check invoice status in database
-            var cartResponse = banHangClientService.layGioHang(hoaDonId);
-            
+            Optional<HoaDon> hoaDonOpt = hoaDonRepository.findById(hoaDonId);
+            if (hoaDonOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "invoiceId", hoaDonId,
+                        "status", "not_found",
+                        "message", "Không tìm thấy hóa đơn"));
+            }
+            HoaDon hoaDon = hoaDonOpt.get();
             Map<String, Object> response = new HashMap<>();
             response.put("invoiceId", hoaDonId);
-            
-            // Determine status based on invoice data
-            if (cartResponse != null) {
-                // If cart still exists, payment is pending
+
+            if (hoaDon.getTrangThai() != null && hoaDon.getTrangThai() == 0) {
                 response.put("status", "pending");
-                response.put("message", "Payment is still pending");
-            } else {
-                // If cart is cleared, payment was successful
+                response.put("message", "Thanh toán đang chờ xử lý");
+            } else if (hoaDon.getTrangThai() != null
+                    && hoaDon.getTrangThai() == com.example.sd_24_striker_be.common.bill.HoaDonStatus.DA_HUY) {
+                response.put("status", "failed");
+                response.put("message", "Hóa đơn đã bị hủy");
+            } else if (hoaDon.getTongTienSauGiam() != null
+                    && hinhThucThanhToanRepository.existsSuccessfulVNPayPayment(
+                    hoaDonId, hoaDon.getTongTienSauGiam())) {
                 response.put("status", "success");
-                response.put("message", "Payment completed successfully");
+                response.put("message", "Thanh toán VNPay thành công");
+            } else {
+                response.put("status", "inconsistent");
+                response.put("message", "Hóa đơn chưa có bản ghi thanh toán VNPay khớp số tiền");
             }
-            
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.err.println("Error getting payment status: " + e.getMessage());
-            
-            // If cart not found, assume payment was completed
-            Map<String, Object> response = new HashMap<>();
-            response.put("invoiceId", hoaDonId);
-            response.put("status", "success");
-            response.put("message", "Payment status unknown, assuming completed");
-            
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "invoiceId", hoaDonId,
+                    "status", "error",
+                    "message", "Không thể xác định trạng thái thanh toán"));
         }
     }
 }

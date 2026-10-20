@@ -13,4 +13,15 @@ public interface HinhThucThanhToanRepository extends JpaRepository<HinhThucThanh
     
     @Query("SELECT htt FROM HinhThucThanhToan htt WHERE htt.idHoaDon.id = :hoaDonId AND htt.deleted = false")
     List<HinhThucThanhToan> findByHoaDonId(@Param("hoaDonId") Integer hoaDonId);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(htt) > 0 THEN true ELSE false END
+            FROM HinhThucThanhToan htt
+            WHERE htt.idHoaDon.id = :hoaDonId
+              AND htt.deleted = false
+              AND UPPER(htt.idPhuongThucThanhToan.kieuThanhToan) = 'VNPAY'
+              AND htt.tienChuyenKhoan = :amount
+            """)
+    boolean existsSuccessfulVNPayPayment(@Param("hoaDonId") Integer hoaDonId,
+                                         @Param("amount") java.math.BigDecimal amount);
 }

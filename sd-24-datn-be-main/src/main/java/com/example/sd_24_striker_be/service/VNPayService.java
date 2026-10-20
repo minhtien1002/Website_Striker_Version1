@@ -130,6 +130,7 @@ public class VNPayService {
             if (signValue.equals(vnp_SecureHash)) {
                 String vnp_TxnRef = request.getParameter("vnp_TxnRef");
                 String vnp_TransactionStatus = request.getParameter("vnp_TransactionStatus");
+                String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
                 String vnp_Amount = request.getParameter("vnp_Amount");
 
                 String idHD = null;
@@ -146,7 +147,7 @@ public class VNPayService {
                     Integer orderIdInt = Integer.parseInt(idHD);
                     Long vnpayAmount = vnp_Amount != null ? Long.parseLong(vnp_Amount) / 100 : 0L; // Convert from VNPay format
                     
-                    if ("00".equals(vnp_TransactionStatus)) {
+                    if ("00".equals(vnp_TransactionStatus) && "00".equals(vnp_ResponseCode)) {
                         // Payment successful - update invoice status to paid with VNPay amount
                         hoaDonService.updateInvoiceStatusAfterVNPayPayment(orderIdInt, 1, vnpayAmount);
                         return idHD;

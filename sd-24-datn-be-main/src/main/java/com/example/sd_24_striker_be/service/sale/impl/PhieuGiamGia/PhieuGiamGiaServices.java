@@ -176,6 +176,11 @@ public class PhieuGiamGiaServices {
                 .soTienGiamToiDa(dto.getSoTienGiamToiDa())
                 .hoaDonToiThieu(dto.getHoaDonToiThieu())
                 .soLuongDung(dto.getSoLuongDung())
+                .loaiApDung("PHI_VAN_CHUYEN".equalsIgnoreCase(dto.getLoaiApDung())
+                        ? "PHI_VAN_CHUYEN" : "DON_HANG")
+                .soLuongPhatHanh(dto.getSoLuongDung())
+                .soLuotDaDung(0)
+                .gioiHanMoiKhach(dto.getGioiHanMoiKhach())
                 .ngayBatDau(ngayBatDauInstant)
                 .ngayKetThuc(ngayKetThucInstant)
                 .riengTu(dto.getRiengTu())
@@ -235,12 +240,13 @@ public class PhieuGiamGiaServices {
      * giảm, sắp xếp phiếu giảm nhiều nhất lên đầu (để màn bán hàng tự chọn phiếu tốt nhất).
      * Phiếu chưa đủ điều kiện đơn tối thiểu vẫn trả về (hopLe = false) để hiển thị lý do.
      */
-    public List<Map<String, Object>> getPhieuKhaDung(BigDecimal tongTien, Integer khachHangId) {
+    public List<Map<String, Object>> getPhieuKhaDung(BigDecimal tongTien, BigDecimal phiVanChuyen, Integer khachHangId) {
         BigDecimal tong = tongTien == null ? BigDecimal.ZERO : tongTien;
+        BigDecimal phiShip = phiVanChuyen == null ? BigDecimal.ZERO : phiVanChuyen.max(BigDecimal.ZERO);
         List<Map<String, Object>> result = new ArrayList<>();
         for (PhieuGiamGia p : getActiveVouchersForCustomer(khachHangId)) {
             String lyDo = VoucherCalculator.validate(p, tong);
-            BigDecimal giam = lyDo == null ? VoucherCalculator.discountAmount(p, tong) : BigDecimal.ZERO;
+            BigDecimal giam = lyDo == null ? VoucherCalculator.discountAmount(p, tong, phiShip) : BigDecimal.ZERO;
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", p.getId());
             m.put("ma", p.getMa());
@@ -250,9 +256,14 @@ public class PhieuGiamGiaServices {
             m.put("soTienGiamToiDa", p.getSoTienGiamToiDa());
             m.put("hoaDonToiThieu", p.getHoaDonToiThieu());
             m.put("soLuongDung", p.getSoLuongDung());
+            m.put("loaiApDung", p.getLoaiApDung() == null ? "DON_HANG" : p.getLoaiApDung());
+            m.put("soLuongPhatHanh", p.getSoLuongPhatHanh());
+            m.put("soLuotDaDung", p.getSoLuotDaDung() == null ? 0 : p.getSoLuotDaDung());
+            m.put("gioiHanMoiKhach", p.getGioiHanMoiKhach());
             m.put("ngayKetThuc", p.getNgayKetThuc());
             m.put("riengTu", p.getRiengTu());
             m.put("soTienGiam", giam);
+            m.put("phiVanChuyen", phiShip);
             m.put("hopLe", lyDo == null && giam.signum() > 0);
             m.put("lyDo", lyDo);
             result.add(m);
@@ -275,6 +286,10 @@ public class PhieuGiamGiaServices {
                 .soTienGiamToiDa(pgg.getSoTienGiamToiDa())
                 .hoaDonToiThieu(pgg.getHoaDonToiThieu())
                 .soLuongDung(pgg.getSoLuongDung())
+                .loaiApDung(pgg.getLoaiApDung() == null ? "DON_HANG" : pgg.getLoaiApDung())
+                .soLuongPhatHanh(pgg.getSoLuongPhatHanh())
+                .soLuotDaDung(pgg.getSoLuotDaDung() == null ? 0 : pgg.getSoLuotDaDung())
+                .gioiHanMoiKhach(pgg.getGioiHanMoiKhach())
                 .ngayBatDau(pgg.getNgayBatDau() != null
                         ? pgg.getNgayBatDau().atZone(ZoneId.systemDefault()).toLocalDate()
                         : null)
@@ -436,15 +451,26 @@ public class PhieuGiamGiaServices {
      * khác (hoặc khách lẻ) vẫn dùng được phiếu riêng tư nếu biết id.
      */
     public void kiemTraQuyenSuDung(PhieuGiamGia phieuGiamGia, KhachHang khachHang) {
-        if (phieuGiamGia == null || !Boolean.TRUE.equals(phieuGiamGia.getRiengTu())) {
+        if (phieuGiamGia == null) {
             return;
         }
-        boolean duocTang = khachHang != null && phieuGiamGiaCaNhanRepository
-                .findByIdPhieuGiamGiaAndIdKhachHang(phieuGiamGia, khachHang)
-                .filter(p -> !Boolean.TRUE.equals(p.getDeleted()))
-                .isPresent();
-        if (!duocTang) {
-            throw new RuntimeException("Phiếu giảm giá " + phieuGiamGia.getMa() + " là phiếu riêng, khách hàng này không được sử dụng");
+        if (Boolean.TRUE.equals(phieuGiamGia.getRiengTu())) {
+            boolean duocTang = khachHang != null && phieuGiamGiaCaNhanRepository
+                    .findByIdPhieuGiamGiaAndIdKhachHang(phieuGiamGia, khachHang)
+                    .filter(p -> !Boolean.TRUE.equals(p.getDeleted()))
+                    .isPresent();
+            if (!duocTang) {
+                throw new RuntimeException("Phiếu giảm giá " + phieuGiamGia.getMa() + " là phiếu riêng, khách hàng này không được sử dụng");
+            }
+        }
+        if (phieuGiamGia.getGioiHanMoiKhach() != null) {
+            if (khachHang == null) {
+                throw new RuntimeException("Cần đăng nhập để sử dụng phiếu giảm giá này");
+            }
+            Long daDung = hoaDonRepository.countVoucherUsageByCustomer(phieuGiamGia.getId(), khachHang.getId());
+            if (daDung >= phieuGiamGia.getGioiHanMoiKhach()) {
+                throw new RuntimeException("Khách hàng đã dùng hết số lần được phép của phiếu " + phieuGiamGia.getMa());
+            }
         }
     }
 

@@ -14,7 +14,7 @@ import { useConfirm } from '@/composables/useConfirm.js'
  *  - tích chọn sản phẩm muốn thanh toán (phần không chọn được giữ lại trong giỏ),
  *  - thông tin khách / địa chỉ mặc định hiện sẵn, đổi được ngay tại chỗ,
  *  - phí vận chuyển lấy từ API theo địa chỉ, phiếu giảm giá tốt nhất được chọn tự động,
- *  - mọi thao tác đều hỏi xác nhận.
+ *  - chỉ thao tác rủi ro (xóa/chốt đơn) mới hỏi xác nhận.
  */
 const API = 'http://localhost:8080/api'
 const PROVINCE_API = 'https://provinces.open-api.vn/api'
@@ -61,8 +61,6 @@ const totalQty = computed(() => selectedItems.value.reduce((s, i) => s + i.soLuo
 const changeQty = async (item, qty, ev) => {
   if (!Number.isInteger(qty) || qty < 1) { toast.error('Số lượng phải lớn hơn 0'); if (ev) ev.target.value = item.soLuong; return }
   if (qty > item.soLuongTonKho) { toast.error(`Chỉ còn ${item.soLuongTonKho} sản phẩm`); if (ev) ev.target.value = item.soLuong; return }
-  const ok = await confirm({ title: 'Cập nhật số lượng?', details: [`${item.tenSanPham} (${item.tenMauSac} / ${item.tenKichCo})`, `${item.soLuong} → ${qty}`], confirmText: 'Cập nhật' })
-  if (!ok) { if (ev) ev.target.value = item.soLuong; return }
   busy.value = true
   try { await cartService.updateQuantity(item.id, qty); await loadCart() }
   catch (e) { toast.error(errMsg(e)); if (ev) ev.target.value = item.soLuong }
@@ -152,15 +150,17 @@ watch([fullAddress, totalQty], () => {
 const vouchers = ref([])
 const voucherId = ref(null)
 const manualVoucher = ref(false)
+const voucherCode = ref('')
+const voucherCodeMessage = ref('')
 const selectedVoucher = computed(() => vouchers.value.find((v) => v.id === voucherId.value && v.hopLe) || null)
 const discount = computed(() => Number(selectedVoucher.value?.soTienGiam || 0))
 let vTimer = null
-watch(subtotal, () => {
+watch([subtotal, () => shipping.fee], () => {
   clearTimeout(vTimer)
   vTimer = setTimeout(async () => {
     if (!subtotal.value) { vouchers.value = []; voucherId.value = null; return }
     try {
-      const { data } = await axios.get(`${API}/phieu-giam-gia/kha-dung`, { params: { tongTien: subtotal.value, ...(customerId ? { khachHangId: customerId } : {}) } })
+      const { data } = await axios.get(`${API}/phieu-giam-gia/kha-dung`, { params: { tongTien: subtotal.value, phiVanChuyen: shipping.fee || 0, ...(customerId ? { khachHangId: customerId } : {}) } })
       vouchers.value = data
       if (!manualVoucher.value || !data.find((v) => v.id === voucherId.value && v.hopLe)) {
         voucherId.value = data.find((v) => v.hopLe)?.id ?? null
@@ -169,6 +169,19 @@ watch(subtotal, () => {
     } catch { vouchers.value = [] }
   }, 300)
 }, { immediate: true })
+
+const applyVoucherCode = () => {
+  const code = voucherCode.value.trim().toUpperCase()
+  voucherCodeMessage.value = ''
+  if (!code) { voucherCodeMessage.value = 'Vui lòng nhập mã phiếu giảm giá'; return }
+  const voucher = vouchers.value.find((v) => String(v.ma || '').trim().toUpperCase() === code)
+  if (!voucher) { voucherCodeMessage.value = 'Mã không tồn tại hoặc không dành cho tài khoản này'; return }
+  if (!voucher.hopLe) { voucherCodeMessage.value = voucher.lyDo || 'Đơn hàng chưa đủ điều kiện áp dụng'; return }
+  voucherId.value = voucher.id
+  manualVoucher.value = true
+  voucherCode.value = voucher.ma
+  voucherCodeMessage.value = `Đã áp dụng ${voucher.ma}, giảm ${money(voucher.soTienGiam)}`
+}
 
 // ---------------- Thanh toán ----------------
 const paymentMethod = ref('COD')
@@ -379,6 +392,11 @@ onMounted(async () => {
 
           <div class="cx-field">
             <label>Phiếu giảm giá</label>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input v-model="voucherCode" class="cx-input" placeholder="Nhập mã giảm giá" @keyup.enter="applyVoucherCode" />
+              <button class="cx-chip" type="button" @click="applyVoucherCode">Áp dụng</button>
+            </div>
+            <span v-if="voucherCodeMessage" class="cx-hint">{{ voucherCodeMessage }}</span>
             <select v-model="voucherId" class="cx-select" @change="manualVoucher = true">
               <option :value="null">Không dùng phiếu giảm giá</option>
               <option v-for="v in vouchers" :key="v.id" :value="v.id" :disabled="!v.hopLe">

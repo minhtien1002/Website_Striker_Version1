@@ -44,6 +44,19 @@ public class PhieuGiamGia {
     @Column(name = "so_luong_dung")
     private Integer soLuongDung;
 
+    @Nationalized
+    @Column(name = "loai_ap_dung")
+    private String loaiApDung;
+
+    @Column(name = "so_luong_phat_hanh")
+    private Integer soLuongPhatHanh;
+
+    @Column(name = "so_luot_da_dung")
+    private Integer soLuotDaDung;
+
+    @Column(name = "gioi_han_moi_khach")
+    private Integer gioiHanMoiKhach;
+
     @Column(name = "ngay_bat_dau")
     private Instant ngayBatDau;
 
