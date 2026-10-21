@@ -33,12 +33,13 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
             h.deleted
             ) 
             FROM HoaDon h
+            LEFT JOIN h.idNhanVien nv
             WHERE (
                    :keyword IS NULL 
                    OR h.ma LIKE %:keyword%
                    OR h.tenKhachHang LIKE %:keyword%
                    OR h.soDienThoaiKhachHang LIKE %:keyword%
-                   OR h.idNhanVien.ma LIKE %:keyword%
+                   OR nv.ma LIKE %:keyword%
                     )
                    AND (:minAmount IS NULL OR h.tongTienSauGiam >= :minAmount)
                    AND (:maxAmount IS NULL OR h.tongTienSauGiam <= :maxAmount)

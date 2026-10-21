@@ -11,8 +11,6 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 @ToString
 @Table(name = "danh_muc")
@@ -47,6 +45,22 @@ public class DanhMuc implements ThuocTinh {
     @ColumnDefault("0")
     @Column(name = "deleted")
     private Boolean deleted;
+
+    /** Constructors are explicit because the IDE's incremental Lombok compiler once
+     * generated a Java-25-only all-args constructor into the Java-17 target classes. */
+    public DanhMuc() {
+    }
+
+    public DanhMuc(Integer id, String tenDanhMuc, String maDanhMuc, String moTa,
+                   Instant ngayTao, Instant ngayCapNhat, Boolean deleted) {
+        this.id = id;
+        this.tenDanhMuc = tenDanhMuc;
+        this.maDanhMuc = maDanhMuc;
+        this.moTa = moTa;
+        this.ngayTao = ngayTao;
+        this.ngayCapNhat = ngayCapNhat;
+        this.deleted = deleted;
+    }
 
     @Override
     @JsonIgnore
