@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mssql__search_objects",
+      "Bash(mkdir -p src/test/java/com/example/sd_28_striker_be)",
+      "Bash(mv src/test/java/com/example/sd_28_phostep_be/Sd28PhoStepBeApplicationTests.java src/test/java/com/example/sd_28_striker_be/Sd28StrikerBeApplicationTests.java)",
+      "Bash(rmdir src/test/java/com/example/sd_28_phostep_be)",
+      "Bash(mv src/main/java/com/example/sd_28_striker_be/Sd28PhoStepBeApplication.java src/main/java/com/example/sd_28_striker_be/Sd28StrikerBeApplication.java)",
+      "Bash(./mvnw -q -o compile)",
+      "Read(//c/Program Files/Java//**)",
+      "Read(//c/Program Files/**)",
+      "Bash(where java *)",
+      "Bash(java -version)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./mvnw -q -o compile)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./mvnw -q compile)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-17\" ./mvnw -q clean compile)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(grep -v \"\\\\.jrxml$\")"
+    ]
+  }
+}

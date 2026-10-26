@@ -1,0 +1,61 @@
+package com.example.sd_24_striker_be.modal.product;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Nationalized;
+
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Getter
+@Setter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+@Table(name = "anh_san_pham")
+public class AnhSanPham {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @Nationalized
+    @Lob
+    @Column(name = "url_anh")
+    private String urlAnh;
+
+    @ColumnDefault("0")
+    @Column(name = "la_anh_dai_dien")
+    private Boolean laAnhDaiDien;
+
+    @ColumnDefault("getdate()")
+    @Column(name = "ngay_tao")
+    private Instant ngayTao;
+
+    @ColumnDefault("getdate()")
+    @Column(name = "ngay_cap_nhat")
+    private Instant ngayCapNhat;
+
+    @NotNull
+    @ColumnDefault("0")
+    @Column(name = "deleted", nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
+
+    @OneToMany(mappedBy = "idAnhSanPham")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "idAnhSanPham", "idSanPham"})
+    @Builder.Default
+    private Set<ChiTietSanPham> chiTietSanPhams = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "idAnhSanPham")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "idAnhSanPham", "chiTietSanPhams"})
+    @Builder.Default
+    private Set<SanPham> sanPhams = new LinkedHashSet<>();
+
+}

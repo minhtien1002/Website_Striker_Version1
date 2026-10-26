@@ -1,0 +1,133 @@
+package com.example.sd_24_striker_be.modal.bill;
+
+import com.example.sd_24_striker_be.modal.sale.PhieuGiamGia;
+import com.example.sd_24_striker_be.modal.account.KhachHang;
+import com.example.sd_24_striker_be.modal.account.NhanVien;
+import com.example.sd_24_striker_be.modal.sell.HinhThucThanhToan;
+import com.example.sd_24_striker_be.common.TimestampOffsetConverter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Nationalized;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Getter
+@Setter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+@Table(name = "hoa_don")
+public class HoaDon {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_khach_hang", referencedColumnName = "id")
+    private KhachHang idKhachHang;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_nhan_vien", referencedColumnName = "id")
+    private NhanVien idNhanVien;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_phieu_giam_gia", referencedColumnName = "id")
+    private PhieuGiamGia idPhieuGiamGia;
+
+    @Nationalized
+    @Column(name = "ma")
+    private String ma;
+
+    @Column(name = "tien_san_pham", nullable = false, precision = 18, scale = 2)
+    private BigDecimal tienSanPham;
+
+    @Nationalized
+    @Column(name = "loai_don", nullable = false)
+    private String loaiDon;
+
+    @ColumnDefault("0")
+    @Column(name = "phi_van_chuyen", nullable = false, precision = 18, scale = 2)
+    private BigDecimal phiVanChuyen;
+
+    @Column(name = "tong_tien", precision = 38, scale = 2)
+    private BigDecimal tongTien;
+
+    @Column(name = "tong_tien_sau_giam", precision = 38, scale = 2)
+    private BigDecimal tongTienSauGiam;
+
+    @Nationalized
+    @Column(name = "ghi_chu")
+    private String ghiChu;
+
+    @Nationalized
+    @Column(name = "ten_khach_hang", nullable = false)
+    private String tenKhachHang;
+
+    @Nationalized
+    @Column(name = "dia_chi_khach_hang", nullable = false)
+    private String diaChiKhachHang;
+
+    @Column(name = "so_dien_thoai_khach_hang")
+    private String soDienThoaiKhachHang;
+
+    @Nationalized
+    @Column(name = "email")
+    private String email;
+
+    // LƯU Ý: trước đây là java.sql.Date - kiểu này CHỈ lưu ngày, luôn cắt bỏ giờ:phút:giây
+    // (Hibernate coi java.sql.Date là kiểu TemporalType.DATE bất kể cột DB là datetime),
+    // khiến mọi hóa đơn đều hiện đúng ngày nhưng SAI GIỜ (luôn là 00:00). Đổi sang
+    // java.sql.Timestamp để giữ đúng giờ:phút:giây thực tế.
+    @ColumnDefault("getdate()")
+    @Column(name = "ngay_tao", nullable = false)
+    private Timestamp ngayTao;
+
+    @Column(name = "ngay_thanh_toan")
+    @Convert(converter = TimestampOffsetConverter.class)
+    private Timestamp ngayThanhToan;
+
+    @ColumnDefault("1")
+    @Column(name = "trang_thai", columnDefinition = "tinyint not null")
+    private Short trangThai;
+
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted;
+
+    @ColumnDefault("getdate()")
+    @Column(name = "created_at", nullable = false)
+    private Timestamp createdAt;
+
+    @Column(name = "created_by")
+    private Integer createdBy;
+
+    @Column(name = "updated_at")
+    private Timestamp updatedAt;
+
+    @Column(name = "updated_by")
+    private Integer updatedBy;
+
+    // Bỏ tham chiếu ngược idHoaDon khi serialize, tránh vòng lặp vô hạn
+    // HoaDon -> lichSuHoaDon -> idHoaDon -> lichSuHoaDon ... làm JSON bị cắt cụt.
+    @OneToMany(mappedBy = "idHoaDon")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "idHoaDon"})
+    private List<LichSuHoaDon> lichSuHoaDon;
+
+    @OneToMany(mappedBy = "idHoaDon", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "idHoaDon"})
+    private Set<HoaDonChiTiet> chiTietHoaDon = new HashSet<>();
+
+    @OneToMany(mappedBy = "idHoaDon", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "idHoaDon"})
+    private Set<HinhThucThanhToan> hinhThucThanhToan = new HashSet<>();
+}
