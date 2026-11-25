@@ -18,9 +18,14 @@
           <button v-if="nextStatus !== null && !isTaiQuay" class="ui-btn primary" :disabled="busy" @click="advance">
             Chuyển sang "{{ getStatusName(nextStatus) }}"
           </button>
-          <button v-if="canMarkDeliveryFailed(hd.trangThai)" class="ui-btn" :disabled="busy" @click="failDelivery">Giao thất bại</button>
-          <button v-if="canRestock(hd.trangThai)" class="ui-btn" :disabled="busy" @click="restock">Hoàn kho</button>
-          <button v-if="canCancelOrder(hd.trangThai) && !isTaiQuay" class="ui-btn" :disabled="busy" @click="cancel">Hủy đơn</button>
+          
+          <!-- Nút Giao thất bại mở Modal mới -->
+          <button v-if="canMarkDeliveryFailed(hd.trangThai)" class="ui-btn" :disabled="busy" @click="openFailDelivery">Giao thất bại</button>
+          
+          <!-- Nút Hoàn kho mở Modal mới -->
+          <button v-if="canRestock(hd.trangThai)" class="ui-btn warning" :disabled="busy" @click="openRestock">Hoàn kho</button>
+          
+          <button v-if="canCancelOrder(hd.trangThai) && !isTaiQuay" class="ui-btn danger" :disabled="busy" @click="cancel">Hủy đơn</button>
           <button v-if="canConfirmReturn(hd.trangThai)" class="ui-btn" :disabled="busy" @click="confirmReturn">Xác nhận hoàn hàng</button>
           <button v-if="canRejectReturn(hd.trangThai)" class="ui-btn" :disabled="busy" @click="rejectReturn">Từ chối hoàn hàng</button>
         </div>
@@ -111,6 +116,79 @@
         </table>
       </div>
     </template>
+
+    <!-- ==================================================== -->
+    <!-- MODAL 1: GIAO HÀNG THẤT BẠI                          -->
+    <!-- ==================================================== -->
+    <div v-if="showFailModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3>Giao hàng thất bại?</h3>
+          <button class="ui-modal-close" @click="showFailModal = false">&times;</button>
+        </div>
+        <div class="ui-modal-body">
+          <p class="ui-hint" style="margin-bottom: 16px;">
+            Hàng chưa về kho; khi hàng về hãy bấm "Hoàn kho" để cộng lại tồn kho, hoặc chuyển giao lại.
+          </p>
+          
+          <div class="ui-field">
+            <label class="ui-label">Lý do giao thất bại <span class="req">*</span></label>
+            <select v-model="failReasonOption" class="ui-select">
+              <option value="" disabled>-- Vui lòng chọn lý do --</option>
+              <option value="Khách hàng không nghe máy">Khách hàng không nghe máy</option>
+              <option value="Khách hàng hẹn giao lại">Khách hàng hẹn giao lại</option>
+              <option value="Sai địa chỉ / Không tìm thấy địa chỉ">Sai địa chỉ / Không tìm thấy địa chỉ</option>
+              <option value="Khách từ chối nhận hàng">Khách từ chối nhận hàng</option>
+              <option value="Khách không có ở nhà">Khách không có ở nhà</option>
+              <option value="Lý do khác">Lý do khác...</option>
+            </select>
+          </div>
+
+          <div v-if="failReasonOption === 'Lý do khác'" class="ui-field" style="margin-top: 12px;">
+            <label class="ui-label">Chi tiết lý do <span class="req">*</span></label>
+            <textarea v-model="failReasonCustom" class="ui-textarea" rows="3" placeholder="Nhập chi tiết lý do (ít nhất 5 ký tự)..."></textarea>
+          </div>
+        </div>
+        <div class="ui-modal-footer">
+          <button class="ui-btn" @click="showFailModal = false" :disabled="busy">Hủy bỏ</button>
+          <button class="ui-btn danger" @click="submitFailDelivery" :disabled="busy">Xác nhận giao thất bại</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- MODAL 2: HOÀN KHO (MỚI)                              -->
+    <!-- ==================================================== -->
+    <div v-if="showRestockModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3>Hoàn kho đơn giao thất bại?</h3>
+          <button class="ui-modal-close" @click="showRestockModal = false">&times;</button>
+        </div>
+        <div class="ui-modal-body">
+          <p class="ui-hint" style="margin-bottom: 16px;">
+            Chỉ xác nhận khi hàng đã về đến kho. Tồn kho sẽ được cộng lại và số lượng đã bán được trừ đi.
+          </p>
+          
+          <!-- Hiển thị danh sách sản phẩm cần hoàn kho -->
+          <div class="ui-restock-list" style="background: #f9f9f9; padding: 12px; border-radius: 4px; margin-bottom: 16px; border: 1px solid var(--line);">
+            <div v-for="p in (hd?.sanPhamChiTietInfos || [])" :key="p.hoaDonChiTietId" style="font-size: 0.9rem; margin-bottom: 4px;">
+              {{ p.maChiTietSanPham }}: <strong style="color: #2b6cb0;">+{{ p.soLuong }}</strong>
+            </div>
+          </div>
+
+          <div class="ui-field">
+            <label class="ui-label">Ghi chú (Tùy chọn)</label>
+            <textarea v-model="restockNote" class="ui-textarea" rows="2" placeholder="VD: Hàng đã về kho nguyên vẹn..."></textarea>
+          </div>
+        </div>
+        <div class="ui-modal-footer">
+          <button class="ui-btn" @click="showRestockModal = false" :disabled="busy">Hủy bỏ</button>
+          <button class="ui-btn primary" @click="submitRestock" :disabled="busy">Hoàn kho</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -185,29 +263,76 @@ const advance = async () => {
   run(() => updateHoaDonStatus(hd.value.id, to, nhanVienId), `Đã chuyển sang "${getStatusName(to)}"`)
 }
 
-const failDelivery = async () => {
-  const lyDo = await confirm({
-    title: 'Giao hàng thất bại?',
-    message: 'Hàng chưa về kho; khi hàng về hãy bấm "Hoàn kho" để cộng lại tồn kho, hoặc chuyển giao lại.',
-    requireReason: true, reasonLabel: 'Lý do giao thất bại', reasonPlaceholder: 'VD: Khách không nghe máy 3 lần, sai địa chỉ...',
-    confirmText: 'Xác nhận giao thất bại', tone: 'warning'
-  })
-  if (!lyDo) return
-  if (lyDo.length < 5) { toast.error('Lý do giao thất bại tối thiểu 5 ký tự'); return }
-  run(() => markDeliveryFailed(hd.value.id, nhanVienId, lyDo), 'Đã chuyển sang Giao thất bại')
+// ==========================================
+// LOGIC XỬ LÝ MODAL GIAO HÀNG THẤT BẠI
+// ==========================================
+const showFailModal = ref(false)
+const failReasonOption = ref('')
+const failReasonCustom = ref('')
+
+const openFailDelivery = () => {
+  failReasonOption.value = ''
+  failReasonCustom.value = ''
+  showFailModal.value = true
 }
 
-const restock = async () => {
-  const ok = await confirm({
-    title: 'Hoàn kho đơn giao thất bại?',
-    message: 'Chỉ xác nhận khi hàng đã về đến kho. Tồn kho sẽ được cộng lại và số lượng đã bán được trừ đi.',
-    details: (hd.value.sanPhamChiTietInfos || []).map((p) => `${p.maChiTietSanPham}: +${p.soLuong}`),
-    confirmText: 'Hoàn kho', tone: 'warning'
-  })
-  if (!ok) return
-  run(() => restockFailedDelivery(hd.value.id, nhanVienId), 'Đã hoàn kho')
+const submitFailDelivery = async () => {
+  if (!failReasonOption.value) {
+    toast.error('Vui lòng chọn lý do giao thất bại')
+    return
+  }
+  if (failReasonOption.value === 'Lý do khác' && failReasonCustom.value.trim().length < 5) {
+    toast.error('Vui lòng nhập chi tiết lý do (ít nhất 5 ký tự)')
+    return
+  }
+
+  let finalReason = failReasonOption.value
+  if (failReasonOption.value === 'Lý do khác') {
+    finalReason = `Khác: ${failReasonCustom.value.trim()}`
+  }
+
+  showFailModal.value = false
+  busy.value = true
+  try {
+    await markDeliveryFailed(hd.value.id, nhanVienId, finalReason)
+    toast.success('Đã chuyển sang Giao thất bại')
+    await load()
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    busy.value = false
+  }
 }
 
+// ==========================================
+// LOGIC XỬ LÝ MODAL HOÀN KHO (MỚI)
+// ==========================================
+const showRestockModal = ref(false)
+const restockNote = ref('')
+
+const openRestock = () => {
+  restockNote.value = ''
+  showRestockModal.value = true
+}
+
+const submitRestock = async () => {
+  showRestockModal.value = false
+  busy.value = true
+  try {
+    // Gọi API hoàn kho, truyền thêm ghi chú
+    await restockFailedDelivery(hd.value.id, nhanVienId, restockNote.value.trim())
+    toast.success('Đã hoàn kho thành công')
+    await load()
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+// ==========================================
+// CÁC HÀM KHÁC
+// ==========================================
 const cancel = async () => {
   const lyDo = await confirm({
     title: 'Hủy đơn hàng?',
@@ -251,4 +376,108 @@ onMounted(load)
 .step.done .dot { background: var(--accent); color: #fff; border-color: var(--accent); }
 .step .name { font-size: .85rem; font-weight: 600; }
 .step.current .name { color: var(--accent); }
+
+/* ========================================= */
+/* CSS CHO CÁC MODAL                          */
+/* ========================================= */
+.ui-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.ui-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ui-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.ui-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.ui-modal-body {
+  padding: 20px;
+}
+
+.ui-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ui-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ui-label .req {
+  color: red;
+}
+
+.ui-select, .ui-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.ui-select:focus, .ui-textarea:focus {
+  border-color: var(--accent);
+}
+
+.ui-btn.danger {
+  background: #e53e3e;
+  color: #fff;
+  border: none;
+}
+.ui-btn.danger:hover {
+  background: #c53030;
+}
+
+.ui-btn.warning {
+  background: #ed8936;
+  color: #fff;
+  border: none;
+}
+.ui-btn.warning:hover {
+  background: #dd6b20;
+}
 </style>

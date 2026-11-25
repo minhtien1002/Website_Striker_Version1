@@ -5,14 +5,12 @@ import com.example.sd_24_striker_be.dto.account.response.KhachHang.KhachHangDTOR
 import com.example.sd_24_striker_be.dto.bill.request.UpdateCustomerRequest;
 import com.example.sd_24_striker_be.dto.sell.request.PaymentRequest;
 import com.example.sd_24_striker_be.dto.sell.response.PaymentResponse;
-import com.example.sd_24_striker_be.modal.account.KhachHang;
 import com.example.sd_24_striker_be.modal.bill.HoaDon;
 import com.example.sd_24_striker_be.dto.product.response.ChiTietSanPhamWithDiscountResponse;
 import com.example.sd_24_striker_be.modal.product.ChiTietSanPham;
 import com.example.sd_24_striker_be.service.account.Client.impl.KhachHang.KhachHangServices;
 import com.example.sd_24_striker_be.service.bill.HoaDonService;
 import com.example.sd_24_striker_be.service.product.ChiTietSanPhamService;
-import com.example.sd_24_striker_be.service.product.SanPhamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,15 +26,15 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class BanHangController {
 
-    private final SanPhamService sanPhamService;
     private final ChiTietSanPhamService chiTietSanPhamService;
     private final KhachHangServices khachHangServices;
     private final HoaDonService hoaDonService;
 
+    // Đã xóa SanPhamService vì không sử dụng trong controller này để tránh warning
     @Autowired
-    public BanHangController(SanPhamService sanPhamService, ChiTietSanPhamService chiTietSanPhamService, 
-                           KhachHangServices khachHangServices, HoaDonService hoaDonService) {
-        this.sanPhamService = sanPhamService;
+    public BanHangController(ChiTietSanPhamService chiTietSanPhamService,
+                             KhachHangServices khachHangServices,
+                             HoaDonService hoaDonService) {
         this.chiTietSanPhamService = chiTietSanPhamService;
         this.khachHangServices = khachHangServices;
         this.hoaDonService = hoaDonService;
@@ -70,11 +68,11 @@ public class BanHangController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "") String keyword) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-            Sort.by(sortBy).descending() : 
-            Sort.by(sortBy).ascending();
-            
+
+        Sort sort = sortDir.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<KhachHangDTOResponse> activeCustomers = khachHangServices.getActiveCustomersForSales(pageable, keyword.trim());
         return ResponseEntity.ok(activeCustomers);
@@ -116,7 +114,7 @@ public class BanHangController {
      */
     @PutMapping("/hoa-don-cho/{id}/khach-hang")
     public ResponseEntity<HoaDon> updatePendingInvoiceCustomer(
-            @PathVariable Integer id, 
+            @PathVariable Integer id,
             @RequestBody UpdateCustomerRequest request) {
         HoaDon updatedInvoice = hoaDonService.updatePendingInvoiceCustomer(id, request);
         return ResponseEntity.ok(updatedInvoice);
@@ -137,11 +135,32 @@ public class BanHangController {
     @PostMapping("/thanh-toan")
     public ResponseEntity<PaymentResponse> processPayment(@RequestBody PaymentRequest paymentRequest) {
         PaymentResponse response = hoaDonService.processPayment(paymentRequest);
-        
+
         if (response.isSuccess()) {
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // =========================================================================
+    // API HỦY ĐƠN HÀNG (Dành cho nhân viên / quản trị viên)
+    // =========================================================================
+    /**
+     * Hủy đơn hàng. Áp dụng nghiệp vụ: Không cho phép hủy nếu đơn đang ở trạng thái
+     * Chờ vận chuyển (3) hoặc Đang vận chuyển (4).
+     */
+    @PutMapping("/huy-don/{id}")
+    public ResponseEntity<?> cancelOrder(
+            @PathVariable("id") Integer id,
+            @RequestParam(value = "lyDo", required = false) String lyDo) {
+        try {
+            // Gọi hàm xử lý ở Service
+            hoaDonService.huyDonHang(id, lyDo);
+            return ResponseEntity.ok("Hủy đơn hàng thành công");
+        } catch (RuntimeException e) {
+            // Trả về lỗi 400 Bad Request kèm thông báo (VD: "Không thể hủy đơn hàng khi đang ở trạng thái Chờ vận chuyển...")
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

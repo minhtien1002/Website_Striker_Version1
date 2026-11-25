@@ -35,9 +35,6 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     @Transactional(readOnly = true)
     public Page<KhachHangDTOResponse> getAllKhachHang(String keyword, Instant keywordAsDate, Short gioiTinh, Boolean trangThai, Pageable pageable) {
-        // Convert trangThai (active status) to deleted status for query
-        // trangThai = true (active) -> deleted = true
-        // trangThai = false (inactive) -> deleted = false
         Boolean deletedStatus = trangThai;
         return khachHangRepository.getAllKH(keyword, keywordAsDate, gioiTinh, deletedStatus, pageable);
     }
@@ -45,7 +42,6 @@ public class KhachHangServiceImpl implements KhachHangService {
     @Override
     @Transactional(readOnly = true)
     public List<KhachHangDTOResponse> getAllActiveKhachHang() {
-        // Get all active customers (deleted = true in this system's logic)
         return khachHangRepository.findAllActiveKhachHang();
     }
 
@@ -54,51 +50,43 @@ public class KhachHangServiceImpl implements KhachHangService {
     public KhachHangDetailResponse getKhachHangById(Integer id) {
         KhachHang khachHang = khachHangRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + id));
-        
         return mapToDetailResponse(khachHang);
     }
 
     @Override
     public KhachHangDetailResponse createKhachHang(KhachHangCreateRequest request) {
-        // Validate input
         validateCreateRequest(request);
-        
-        // Debug logging
+
         System.out.println("=== DEBUG CREATE KHACH HANG ===");
         System.out.println("Email received: " + request.getEmail());
         System.out.println("Ten: " + request.getTen());
         System.out.println("SoDienThoai: " + request.getSoDienThoai());
-        
-        // Check if email or phone already exists
+
         if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
             if (taiKhoanRepository.existsByEmail(request.getEmail())) {
                 throw new RuntimeException("Email đã tồn tại trong hệ thống");
             }
         }
-        
+
         if (taiKhoanRepository.existsBySoDienThoai(request.getSoDienThoai())) {
             throw new RuntimeException("Số điện thoại đã tồn tại trong hệ thống");
         }
-        
-        // Create TaiKhoan first - customer role ID is 3
+
         QuyenHan quyenHan = quyenHanRepository.findById(3)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy quyền hạn khách hàng (ID=3)"));
-        
+
         TaiKhoan taiKhoan = TaiKhoan.builder()
                 .ma(generateTaiKhoanMa())
                 .tenDangNhap(generateTenDangNhap(request.getTen(), request.getNgaySinh()))
                 .email(request.getEmail())
                 .soDienThoai(request.getSoDienThoai())
-                .matKhau(request.getMatKhau()) // Should be encoded in real application
+                .matKhau(request.getMatKhau())
                 .idQuyenHan(quyenHan)
-                .deleted(true) // Set deleted = 1 (true) for new customer account
+                .deleted(true)
                 .build();
-        
-        System.out.println("TaiKhoan before save - Email: " + taiKhoan.getEmail());
+
         taiKhoan = taiKhoanRepository.save(taiKhoan);
-        System.out.println("TaiKhoan after save - Email: " + taiKhoan.getEmail());
-        
-        // Create KhachHang
+
         KhachHang khachHang = KhachHang.builder()
                 .taiKhoan(taiKhoan)
                 .ma(generateKhachHangMa())
@@ -106,16 +94,14 @@ public class KhachHangServiceImpl implements KhachHangService {
                 .gioiTinh(request.getGioiTinh())
                 .ngaySinh(request.getNgaySinh())
                 .cccd(request.getCccd())
-                .deleted(true) // Set deleted = 1 (true) for new customer - same as account
+                .deleted(true)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
-        
-        System.out.println("KhachHang before save - deleted: " + khachHang.getDeleted());
+
         khachHang = khachHangRepository.save(khachHang);
-        System.out.println("KhachHang after save - deleted: " + khachHang.getDeleted());
-        
-        // Create default address if any address field is provided
+
+        // Tạo địa chỉ mặc định nếu có thông tin
         if (hasAddressInfo(request)) {
             DiaChiKhachHang diaChi = DiaChiKhachHang.builder()
                     .idKhachHang(khachHang)
@@ -124,34 +110,35 @@ public class KhachHangServiceImpl implements KhachHangService {
                     .quan(request.getQuan() != null ? request.getQuan() : "")
                     .phuong(request.getPhuong() != null ? request.getPhuong() : "")
                     .diaChiCuThe(request.getDiaChiCuThe() != null ? request.getDiaChiCuThe() : "")
+                    // BỔ SUNG: Lưu Tên và SĐT vào bảng địa chỉ
+                    .tenNguoiNhan(request.getTen())
+                    .soDienThoai(request.getSoDienThoai())
                     .macDinh(true)
                     .deleted(false)
                     .build();
-            
-            // Save the address first
+
             diaChi = diaChiKhachHangRepository.save(diaChi);
-            
-            // Then update the customer with the saved address
+
             khachHang.setIdDiaChiKhachHang(diaChi);
             khachHang = khachHangRepository.save(khachHang);
         }
-        
+
         return mapToDetailResponse(khachHang);
     }
-    
+
     private void validateCreateRequest(KhachHangCreateRequest request) {
         if (request.getTen() == null || request.getTen().trim().isEmpty()) {
             throw new RuntimeException("Tên khách hàng không được để trống");
         }
-        
+
         if (request.getSoDienThoai() == null || request.getSoDienThoai().trim().isEmpty()) {
             throw new RuntimeException("Số điện thoại không được để trống");
         }
-        
+
         if (!request.getSoDienThoai().matches("^0\\d{9}$")) {
             throw new RuntimeException("Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số");
         }
-        
+
         String loi = com.example.sd_24_striker_be.common.ThongTinKhachHangValidator.hoTen(request.getTen());
         if (loi == null) {
             loi = com.example.sd_24_striker_be.common.ThongTinKhachHangValidator.email(request.getEmail());
@@ -163,21 +150,21 @@ public class KhachHangServiceImpl implements KhachHangService {
         if (request.getGioiTinh() == null) {
             throw new RuntimeException("Giới tính không được để trống");
         }
-        
+
         if (request.getNgaySinh() == null) {
             throw new RuntimeException("Ngày sinh không được để trống");
         }
-        
+
         if (request.getMatKhau() == null || request.getMatKhau().trim().isEmpty()) {
             throw new RuntimeException("Mật khẩu không được để trống");
         }
     }
-    
+
     private boolean hasAddressInfo(KhachHangCreateRequest request) {
         return (request.getThanhPho() != null && !request.getThanhPho().trim().isEmpty()) ||
-               (request.getQuan() != null && !request.getQuan().trim().isEmpty()) ||
-               (request.getPhuong() != null && !request.getPhuong().trim().isEmpty()) ||
-               (request.getDiaChiCuThe() != null && !request.getDiaChiCuThe().trim().isEmpty());
+                (request.getQuan() != null && !request.getQuan().trim().isEmpty()) ||
+                (request.getPhuong() != null && !request.getPhuong().trim().isEmpty()) ||
+                (request.getDiaChiCuThe() != null && !request.getDiaChiCuThe().trim().isEmpty());
     }
 
     @Override
@@ -185,7 +172,6 @@ public class KhachHangServiceImpl implements KhachHangService {
         KhachHang khachHang = khachHangRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + id));
 
-        // Validate các trường được gửi lên (trước đây sửa được thành SĐT/email sai định dạng)
         String loi = request.getTen() != null
                 ? com.example.sd_24_striker_be.common.ThongTinKhachHangValidator.hoTen(request.getTen()) : null;
         if (loi == null && request.getSoDienThoai() != null) {
@@ -211,10 +197,9 @@ public class KhachHangServiceImpl implements KhachHangService {
         if (request.getCccd() != null) {
             khachHang.setCccd(request.getCccd());
         }
-        // Removed deleted field update - deleted status should only be changed through specific delete/restore methods
-        
+
         khachHang.setUpdatedAt(Instant.now());
-        
+
         // Update TaiKhoan fields
         TaiKhoan taiKhoan = khachHang.getTaiKhoan();
         if (taiKhoan != null) {
@@ -224,15 +209,13 @@ public class KhachHangServiceImpl implements KhachHangService {
             if (request.getEmail() != null) {
                 taiKhoan.setEmail(request.getEmail());
             }
-            // Do not update deleted status during regular updates
-            // Only update deleted field through specific status change endpoints
             taiKhoanRepository.save(taiKhoan);
         }
-        
+
         // Update address if provided
-        if (request.getThanhPho() != null || request.getQuan() != null || 
-            request.getPhuong() != null || request.getDiaChiCuThe() != null) {
-            
+        if (request.getThanhPho() != null || request.getQuan() != null ||
+                request.getPhuong() != null || request.getDiaChiCuThe() != null) {
+
             DiaChiKhachHang diaChi = khachHang.getIdDiaChiKhachHang();
             if (diaChi != null) {
                 // Update existing address
@@ -248,6 +231,15 @@ public class KhachHangServiceImpl implements KhachHangService {
                 if (request.getDiaChiCuThe() != null) {
                     diaChi.setDiaChiCuThe(request.getDiaChiCuThe());
                 }
+
+                // BỔ SUNG: Cập nhật lại Tên và SĐT vào địa chỉ nếu có
+                if (request.getTen() != null) {
+                    diaChi.setTenNguoiNhan(request.getTen());
+                }
+                if (request.getSoDienThoai() != null) {
+                    diaChi.setSoDienThoai(request.getSoDienThoai());
+                }
+
                 diaChiKhachHangRepository.save(diaChi);
             } else {
                 // Create new address if customer doesn't have one
@@ -258,17 +250,20 @@ public class KhachHangServiceImpl implements KhachHangService {
                         .quan(request.getQuan())
                         .phuong(request.getPhuong())
                         .diaChiCuThe(request.getDiaChiCuThe())
+                        // BỔ SUNG: Lưu Tên và SĐT vào địa chỉ mới
+                        .tenNguoiNhan(request.getTen())
+                        .soDienThoai(request.getSoDienThoai())
                         .macDinh(true)
                         .deleted(false)
                         .build();
-                
+
                 newDiaChi = diaChiKhachHangRepository.save(newDiaChi);
                 khachHang.setIdDiaChiKhachHang(newDiaChi);
             }
         }
-        
+
         khachHang = khachHangRepository.save(khachHang);
-        
+
         return mapToDetailResponse(khachHang);
     }
 
@@ -276,11 +271,10 @@ public class KhachHangServiceImpl implements KhachHangService {
     public void deleteKhachHang(Integer id) {
         KhachHang khachHang = khachHangRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + id));
-        
-        // Only set deleted on KhachHang table, not TaiKhoan
+
         khachHang.setDeleted(false);
         khachHang.setUpdatedAt(Instant.now());
-        
+
         khachHangRepository.save(khachHang);
     }
 
@@ -288,11 +282,10 @@ public class KhachHangServiceImpl implements KhachHangService {
     public void restoreKhachHang(Integer id) {
         KhachHang khachHang = khachHangRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + id));
-        
-        // Only set deleted on KhachHang table, not TaiKhoan
+
         khachHang.setDeleted(true);
         khachHang.setUpdatedAt(Instant.now());
-        
+
         khachHangRepository.save(khachHang);
     }
 
@@ -309,7 +302,7 @@ public class KhachHangServiceImpl implements KhachHangService {
         response.setUpdatedAt(khachHang.getUpdatedAt());
         response.setCreatedBy(khachHang.getCreatedBy());
         response.setUpdatedBy(khachHang.getUpdatedBy());
-        
+
         // Map TaiKhoan information
         TaiKhoan taiKhoan = khachHang.getTaiKhoan();
         if (taiKhoan != null) {
@@ -318,7 +311,7 @@ public class KhachHangServiceImpl implements KhachHangService {
             response.setSoDienThoai(taiKhoan.getSoDienThoai());
             response.setEmail(taiKhoan.getEmail());
         }
-        
+
         // Map address information
         DiaChiKhachHang diaChi = khachHang.getIdDiaChiKhachHang();
         if (diaChi != null) {
@@ -326,8 +319,9 @@ public class KhachHangServiceImpl implements KhachHangService {
             response.setQuan(diaChi.getQuan());
             response.setPhuong(diaChi.getPhuong());
             response.setDiaChiCuThe(diaChi.getDiaChiCuThe());
+            // (Nếu KhachHangDetailResponse có chứa trường tenNguoiNhan / soDienThoai riêng cho địa chỉ thì bạn set thêm ở đây)
         }
-        
+
         return response;
     }
 
@@ -349,11 +343,11 @@ public class KhachHangServiceImpl implements KhachHangService {
         if (ten == null || ngaySinh == null) {
             return "user" + System.currentTimeMillis();
         }
-        
+
         String[] parts = ten.trim().split("\\s+");
         String lastName = parts[parts.length - 1].toLowerCase();
         String birthYear = String.valueOf(ngaySinh.toString().substring(0, 4));
-        
+
         return lastName + birthYear + System.currentTimeMillis() % 1000;
     }
 }

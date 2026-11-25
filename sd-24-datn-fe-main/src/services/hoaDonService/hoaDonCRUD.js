@@ -1,4 +1,4 @@
-import { getAllHoaDon, updateHoaDon, deleteHoaDon } from '@/services/api/APIHoaDon/HoaDonAPI.js';
+import { getAllHoaDon, updateHoaDon, deleteHoaDon, huyDonHangAPI } from '@/services/api/APIHoaDon/HoaDonAPI.js';
 import { STATUS_LABELS, normalizeLoaiDon } from './hoaDonStatus.js';
 
 /**
@@ -162,6 +162,38 @@ export const deleteInvoice = async (invoiceId, toast) => {
   } catch (error) {
     console.error('Lỗi khi xóa hóa đơn:', error.response ? error.response.data : error.message);
     const errorMessage = `Lỗi khi xóa hóa đơn: ${error.response?.data?.message || error.message}`;
+    toast.error(errorMessage);
+    return { success: false, error: errorMessage };
+  }
+};
+
+// =========================================================================
+// BỔ SUNG: Hàm xử lý Hủy Đơn Hàng
+// =========================================================================
+/**
+ * Hủy đơn hàng
+ * @param {Number} invoiceId - ID của hóa đơn
+ * @param {String} lyDo - Lý do hủy đơn
+ * @param {Object} toast - Đối tượng toast của vue-toastification để hiển thị thông báo
+ * @returns {Object} { success: boolean, error: string|null }
+ */
+export const huyDonHang = async (invoiceId, lyDo, toast) => {
+  try {
+    // Gọi API (Hàm huyDonHangAPI này sẽ được định nghĩa ở file HoaDonAPI.js)
+    // Backend trả về chuỗi text "Hủy đơn hàng thành công" nếu ok
+    await huyDonHangAPI(invoiceId, lyDo);
+    
+    toast.success('Hủy đơn hàng thành công!');
+    return { success: true, error: null };
+    
+  } catch (error) {
+    console.error('Lỗi khi hủy đơn hàng:', error);
+    
+    // Bắt câu thông báo lỗi từ Backend ném về 
+    // (VD: "Không thể hủy đơn hàng khi đơn đang ở trạng thái Chờ vận chuyển...")
+    // Tùy thuộc vào cấu hình axios, message có thể nằm ở error.response.data
+    const errorMessage = error.response?.data || error.message || "Có lỗi xảy ra khi hủy đơn hàng.";
+    
     toast.error(errorMessage);
     return { success: false, error: errorMessage };
   }

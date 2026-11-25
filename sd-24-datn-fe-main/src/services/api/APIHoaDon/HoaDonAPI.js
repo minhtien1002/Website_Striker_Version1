@@ -182,6 +182,31 @@ export const downloadInvoicePDF = async (id) => {
     }
 };
 
+// =========================================================================
+// BỔ SUNG: Hàm gọi API Hủy Đơn Hàng
+// =========================================================================
+/**
+ * Hủy đơn hàng (Dành cho Admin/Nhân viên)
+ * @param {number} id - ID hóa đơn
+ * @param {string} lyDo - Lý do hủy đơn
+ * @returns {Promise} API response
+ */
+export const huyDonHangAPI = async (id, lyDo) => {
+    try {
+        // Gọi API PUT, truyền lyDo qua query params
+        // axios.put(url, data, config) -> data là null vì không có body
+        const response = await api.put(`/ban-hang/huy-don/${id}`, null, {
+            params: {
+                lyDo: lyDo
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error cancelling invoice:', error);
+        throw error;
+    }
+};
+
 export default {
     getAllHoaDon,
     getHoaDonById,
@@ -191,5 +216,6 @@ export default {
     getPriceRange,
     getCompletedRevenue,
     getHoaDonByMa,
-    downloadInvoicePDF
+    downloadInvoicePDF,
+    huyDonHangAPI // Nhớ thêm vào export default
 };

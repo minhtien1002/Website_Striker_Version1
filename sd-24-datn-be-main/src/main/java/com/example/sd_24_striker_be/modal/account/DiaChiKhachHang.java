@@ -33,9 +33,11 @@ public class DiaChiKhachHang {
     @Column(name = "thanh_pho", nullable = false)
     private String thanhPho;
 
+    // SỬA DÒNG NÀY: Đổi false thành true để cho phép bỏ trống Quận/Huyện
     @Nationalized
-    @Column(name = "quan", nullable = false)
+    @Column(name = "quan", nullable = true)
     private String quan;
+
 
     @Nationalized
     @Column(name = "phuong", nullable = false)
@@ -44,6 +46,14 @@ public class DiaChiKhachHang {
     @Nationalized
     @Column(name = "dia_chi_cu_the", nullable = false)
     private String diaChiCuThe;
+
+    // THÊM 2 TRƯỜNG NÀY VÀO:
+    @Nationalized
+    @Column(name = "ten_nguoi_nhan")
+    private String tenNguoiNhan;
+
+    @Column(name = "so_dien_thoai")
+    private String soDienThoai;
 
     @ColumnDefault("0")
     @Column(name = "mac_dinh", nullable = false)

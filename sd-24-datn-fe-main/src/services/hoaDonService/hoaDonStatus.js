@@ -45,11 +45,23 @@ export const isStockDeducted = (statusId) => [2, 3, 4, 5, 7, 9].includes(Number(
 
 export const getStatusName = (statusId) => STATUS_LABELS[statusId] || 'Không xác định';
 
-export const ADMIN_CANCELLABLE_FROM = new Set([1, 2, 3, 4]);
+// =========================================================================
+// NGHIỆP VỤ: Chỉ cho phép hủy đơn khi đơn đang ở trạng thái Chờ xác nhận (1) 
+// hoặc Đã xác nhận (2). 
+// Chặn hủy nếu đơn đã chuyển sang Chờ vận chuyển (3) hoặc Đang vận chuyển (4).
+// =========================================================================
+export const ADMIN_CANCELLABLE_FROM = new Set([1, 2]);
+export const CUSTOMER_CANCELLABLE_FROM = new Set([1, 2]); // Dành cho phía Client (nếu có dùng)
+
 export const RETURN_CONFIRMABLE_FROM = new Set([5, 7]);
 export const RETURN_REJECTABLE_FROM = new Set([7]);
 
+// Hàm kiểm tra quyền hủy đơn (Dành cho Admin/Nhân viên)
 export const canCancelOrder = (statusId) => ADMIN_CANCELLABLE_FROM.has(Number(statusId));
+
+// Hàm kiểm tra quyền tự hủy đơn (Dành cho Khách hàng)
+export const canCustomerCancelOrder = (statusId) => CUSTOMER_CANCELLABLE_FROM.has(Number(statusId));
+
 export const canConfirmReturn = (statusId) => RETURN_CONFIRMABLE_FROM.has(Number(statusId));
 export const canRejectReturn = (statusId) => RETURN_REJECTABLE_FROM.has(Number(statusId));
 export const canMarkDeliveryFailed = (statusId) => Number(statusId) === 4;

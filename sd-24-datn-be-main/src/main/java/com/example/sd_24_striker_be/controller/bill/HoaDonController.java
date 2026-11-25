@@ -33,18 +33,17 @@ public class HoaDonController {
     @GetMapping("/home")
     public ResponseEntity<?> getAllHoaDon(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,  // Default size nhỏ hơn để phân trang thực
+            @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long minAmount,
             @RequestParam(required = false) Long maxAmount,
-            @RequestParam(required = false) Long startDate,  // Changed to Long to receive timestamp
-            @RequestParam(required = false) Long endDate,    // Changed to Long to receive timestamp
+            @RequestParam(required = false) Long startDate,
+            @RequestParam(required = false) Long endDate,
             @RequestParam(required = false) Short trangThai,
             @RequestParam(required = false) String loaiDon,
-            @RequestParam(defaultValue = "id") String sortBy,  // Mới: Field sắp xếp
-            @RequestParam(defaultValue = "DESC") String sortDir) {  // Mới: Hướng sắp xếp
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
         if (loaiDon != null) {
-            // Normalize the input to match database values
             if (loaiDon.equalsIgnoreCase("Tại quầy") || loaiDon.equalsIgnoreCase("tai quay") || loaiDon.equalsIgnoreCase("TAI_QUAY")) {
                 loaiDon = "Tại quầy";
             } else if (loaiDon.equalsIgnoreCase("Online")) {
@@ -57,16 +56,15 @@ public class HoaDonController {
             return ResponseEntity.badRequest().body("minAmount phải nhỏ hơn hoặc bằng maxAmount");
         }
 
-        // Convert Long timestamps to Timestamp objects
         Timestamp startTimestamp = startDate != null ? new Timestamp(startDate) : null;
         Timestamp endTimestamp = endDate != null ? new Timestamp(endDate) : null;
 
         if (startTimestamp != null && endTimestamp != null && startTimestamp.after(endTimestamp)) {
             return ResponseEntity.badRequest().body("startDate phải trước hoặc bằng endDate");
         }
-        // Validate and map sortBy field to actual entity fields
+
         String validSortBy = mapSortField(sortBy);
-        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), validSortBy);  // Xây sort động
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), validSortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<HoaDonDTOResponse> response = hoaDonService.getHoaDonAndFilters(keyword, minAmount, maxAmount, startTimestamp, endTimestamp, trangThai, loaiDon, pageable);
         return ResponseEntity.ok(response);
@@ -74,7 +72,6 @@ public class HoaDonController {
 
     @GetMapping("/{id}/detail")
     public ResponseEntity<HoaDonDetailResponse> getHoaDonDetail(@PathVariable Integer id) {
-        // Gọi service, thông báo WebSocket đã được tích hợp trong HoaDonServiceImpl
         HoaDonDetailResponse response = hoaDonService.getHoaDonDetail(id);
         return ResponseEntity.ok(response);
     }
@@ -115,7 +112,6 @@ public class HoaDonController {
             @RequestParam(required = false) Integer idNhanVien,
             @RequestParam(required = false) String ghiChu) {
         try {
-            // Gọi service với ghi chú để lưu vào lịch sử
             HoaDonDTOResponse response = hoaDonService.updateHoaDonStatusWithNote(id, trangThai, idNhanVien, ghiChu);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
@@ -123,10 +119,6 @@ public class HoaDonController {
         }
     }
 
-    /**
-     * Admin hủy đơn hàng. Tồn kho được cộng lại tự động, lịch sử đơn được ghi lại và
-     * khách hàng (nếu có email) sẽ nhận email thông báo hủy đơn.
-     */
     @PostMapping("/{id}/huy")
     public ResponseEntity<?> cancelOrder(
             @PathVariable Integer id,
@@ -140,7 +132,6 @@ public class HoaDonController {
         }
     }
 
-    /** Đang vận chuyển -> Giao thất bại. Bắt buộc nhập lý do. */
     @PostMapping("/{id}/giao-that-bai")
     public ResponseEntity<?> markDeliveryFailed(
             @PathVariable Integer id,
@@ -153,7 +144,6 @@ public class HoaDonController {
         }
     }
 
-    /** Giao thất bại -> Đã hoàn kho: hàng về kho, tồn kho được cộng lại. */
     @PostMapping("/{id}/hoan-kho")
     public ResponseEntity<?> restockFailedDelivery(
             @PathVariable Integer id,
@@ -166,11 +156,6 @@ public class HoaDonController {
         }
     }
 
-    /**
-     * Admin xác nhận đã nhận được hàng khách hoàn trả về kho -> tồn kho được cộng lại.
-     * Áp dụng cho đơn đang "Yêu cầu hoàn hàng" hoặc đơn "Đã hoàn thành" mà khách trả
-     * hàng trực tiếp/offline (admin tạo hoàn hàng thay khách).
-     */
     @PostMapping("/{id}/xac-nhan-hoan-hang")
     public ResponseEntity<?> confirmReturn(
             @PathVariable Integer id,
@@ -184,9 +169,6 @@ public class HoaDonController {
         }
     }
 
-    /**
-     * Admin từ chối yêu cầu hoàn hàng của khách, đơn quay lại trạng thái Đã hoàn thành.
-     */
     @PostMapping("/{id}/tu-choi-hoan-hang")
     public ResponseEntity<?> rejectReturn(
             @PathVariable Integer id,
@@ -200,9 +182,31 @@ public class HoaDonController {
         }
     }
 
-    /**
-     * Xuất Excel danh sách hóa đơn theo cùng bộ lọc với GET /home.
-     */
+    @PostMapping("/{id}/mua-lai")
+    public ResponseEntity<?> muaLaiDonHang(
+            @PathVariable Integer id,
+            @RequestParam Integer idKhachHang) {
+        try {
+            hoaDonService.muaLaiDonHang(id, idKhachHang);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Đã thêm các sản phẩm vào giỏ hàng thành công!");
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
     @GetMapping("/export-excel")
     public ResponseEntity<byte[]> exportExcel(
             @RequestParam(required = false) String keyword,
@@ -237,7 +241,6 @@ public class HoaDonController {
     @GetMapping("/QR-by-ma/{ma}")
     public ResponseEntity<HoaDonDTOResponse> getHoaDonByMa(@PathVariable("ma") String maHD) {
         try {
-            // Gọi service, thông báo WebSocket đã được tích hợp trong HoaDonServiceImpl
             return ResponseEntity.ok(hoaDonService.getHoaDonByMa(maHD));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -256,20 +259,53 @@ public class HoaDonController {
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 
-    /**
-     * Map frontend sort field names to actual entity field names
-     * This prevents errors when frontend sends invalid field names
-     */
+    // =========================================================================
+    // API KHÁCH HÀNG GỬI YÊU CẦU TRẢ HÀNG
+    // =========================================================================
+    @PutMapping("/{id}/yeu-cau-hoan-hang")
+    public ResponseEntity<?> yeuCauHoanHang(
+            @PathVariable("id") Integer id,
+            @RequestParam("idKhachHangActor") Long idKhachHangActor,
+            @RequestParam("lyDo") String lyDo) {
+        try {
+            // Gọi hàm xử lý logic từ Service
+            hoaDonService.yeuCauHoanHang(id, idKhachHangActor, lyDo);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Gửi yêu cầu hoàn hàng thành công");
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            // Bắt các lỗi logic từ Service (VD: Đơn hàng chưa giao thành công)
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        } catch (Exception e) {
+            // Bắt TẤT CẢ các lỗi hệ thống còn lại (NullPointerException, DataIntegrityViolationException...)
+            // IN RA CONSOLE CỦA INTELLIJ ĐỂ DEBUG
+            System.err.println("=== LỖI 500 KHI GỬI YÊU CẦU HOÀN HÀNG ===");
+            e.printStackTrace(); // In chi tiết lỗi ra màn hình đen của IntelliJ
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            // Trả về thông báo lỗi cho Frontend thay vì để nó hiện "No message available"
+            errorResponse.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
     private String mapSortField(String sortBy) {
         if (sortBy == null || sortBy.trim().isEmpty()) {
-            return "id"; // Default sort field
+            return "id";
         }
-        
+
         switch (sortBy.toLowerCase()) {
             case "tongtiensaugiam":
             case "tong_tien_sau_giam":
-            case "tongtienthanhtoan": // Map invalid field to correct one
-            case "tong_tien_thanh_toan": // Map invalid field to correct one
+            case "tongtienthanhtoan":
+            case "tong_tien_thanh_toan":
                 return "tongTienSauGiam";
             case "tongtien":
             case "tong_tien":
@@ -309,9 +345,7 @@ public class HoaDonController {
             case "id":
                 return "id";
             default:
-                // If field name is not recognized, default to id to prevent errors
                 return "id";
         }
     }
-
 }

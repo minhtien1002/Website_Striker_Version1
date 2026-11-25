@@ -34,7 +34,7 @@ public interface HoaDonService {
 
     // Sales counter specific methods
     List<HoaDon> getPendingInvoicesForSales();
-    
+
     HoaDon createPendingInvoice(Integer idNhanVien);
 
     /** Đang vận chuyển -> Giao thất bại, bắt buộc lý do. */
@@ -45,19 +45,19 @@ public interface HoaDonService {
 
     /** Xóa mọi hóa đơn chờ tại quầy; trả số hóa đơn đã xóa. */
     int deleteAllPendingInvoices();
-    
+
     HoaDon updatePendingInvoiceCustomer(Integer id, UpdateCustomerRequest request);
-    
+
     void deletePendingInvoice(Integer id);
-    
+
     // Payment processing method
     PaymentResponse processPayment(PaymentRequest paymentRequest);
-    
+
     // VNPay specific methods
     void updateInvoiceStatusAfterPayment(Integer invoiceId, Integer status);
-    
+
     void updateInvoiceStatusAfterVNPayPayment(Integer invoiceId, Integer status, Long vnpayAmount);
-    
+
     void processCashPayment(Integer invoiceId, java.math.BigDecimal cashAmount);
 
     // Hủy đơn: idNhanVien khác null khi admin thao tác, idKhachHangActor khác null khi khách tự hủy.
@@ -72,8 +72,17 @@ public interface HoaDonService {
     // Admin từ chối yêu cầu hoàn hàng, đơn quay lại trạng thái Đã hoàn thành.
     HoaDonDTOResponse rejectReturn(Integer id, Integer idNhanVien, String lyDo);
 
+
+    void huyDonHang(Integer id, String lyDo);
+
     // Xuất Excel danh sách hóa đơn theo cùng bộ lọc với trang danh sách admin.
     byte[] exportHoaDonExcel(String keyword, Long minAmount, Long maxAmount,
-                              Timestamp startDate, Timestamp endDate, Short trangThai, String loaiDon);
+                             Timestamp startDate, Timestamp endDate, Short trangThai, String loaiDon);
 
+    // =========================================================================
+    // THÊM MỚI: Hàm xử lý mua lại đơn hàng
+    // =========================================================================
+    void muaLaiDonHang(Integer idHoaDon, Integer idKhachHang);
+
+    void yeuCauHoanHang(Integer id, Long idKhachHangActor, String lyDo);
 }

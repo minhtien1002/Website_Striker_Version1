@@ -2,41 +2,46 @@ package com.example.sd_24_striker_be.repository.sell;
 
 import com.example.sd_24_striker_be.modal.sell.GioHangChiTiet;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional; // Thêm import này
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface GioHangChiTietRepository extends JpaRepository<GioHangChiTiet, Integer> {
-    
+
     /**
      * Find all cart details by cart ID
      */
     @Query("SELECT ghct FROM GioHangChiTiet ghct " +
-           "JOIN FETCH ghct.idChiTietSp ctsp " +
-           "JOIN FETCH ctsp.idSanPham sp " +
-           "JOIN FETCH ctsp.idMauSac ms " +
-           "JOIN FETCH ctsp.idKichCo kc " +
-           "WHERE ghct.idGioHang.id = :gioHangId")
+            "JOIN FETCH ghct.idChiTietSp ctsp " +
+            "JOIN FETCH ctsp.idSanPham sp " +
+            "JOIN FETCH ctsp.idMauSac ms " +
+            "JOIN FETCH ctsp.idKichCo kc " +
+            "WHERE ghct.idGioHang.id = :gioHangId")
     List<GioHangChiTiet> findByGioHangId(@Param("gioHangId") Integer gioHangId);
-    
+
     /**
      * Find cart detail by cart ID and product detail ID
      */
     @Query("SELECT ghct FROM GioHangChiTiet ghct " +
-           "WHERE ghct.idGioHang.id = :gioHangId AND ghct.idChiTietSp.id = :chiTietSpId")
-    Optional<GioHangChiTiet> findByGioHangIdAndChiTietSpId(@Param("gioHangId") Integer gioHangId, 
+            "WHERE ghct.idGioHang.id = :gioHangId AND ghct.idChiTietSp.id = :chiTietSpId")
+    Optional<GioHangChiTiet> findByGioHangIdAndChiTietSpId(@Param("gioHangId") Integer gioHangId,
                                                            @Param("chiTietSpId") Integer chiTietSpId);
-    
+
     /**
      * Delete all cart details by cart ID
+     * BỔ SUNG: @Modifying và @Transactional để câu lệnh DELETE hoạt động
      */
+    @Modifying
+    @Transactional
     @Query("DELETE FROM GioHangChiTiet ghct WHERE ghct.idGioHang.id = :gioHangId")
     void deleteByGioHangId(@Param("gioHangId") Integer gioHangId);
-    
+
     /**
      * Count items in cart
      */

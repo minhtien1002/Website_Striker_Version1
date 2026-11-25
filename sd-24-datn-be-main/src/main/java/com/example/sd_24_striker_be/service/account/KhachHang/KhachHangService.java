@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 public interface KhachHangService {
-    
+
     Page<KhachHangDTOResponse> getAllKhachHang(
             String keyword,
             Instant keywordAsDate,
@@ -19,16 +19,16 @@ public interface KhachHangService {
             Boolean trangThai,
             Pageable pageable
     );
-    
+
     List<KhachHangDTOResponse> getAllActiveKhachHang();
-    
+
     KhachHangDetailResponse getKhachHangById(Integer id);
-    
+
     KhachHangDetailResponse createKhachHang(KhachHangCreateRequest request);
-    
+
     KhachHangDetailResponse updateKhachHang(Integer id, KhachHangUpdateRequest request);
-    
+
     void deleteKhachHang(Integer id);
-    
+
     void restoreKhachHang(Integer id);
 }

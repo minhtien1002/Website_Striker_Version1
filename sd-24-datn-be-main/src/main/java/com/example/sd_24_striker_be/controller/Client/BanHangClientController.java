@@ -28,10 +28,10 @@ public class BanHangClientController {
 
     @Autowired
     private BanHangClientService banHangClientService;
-    
+
     @Autowired
     private SanPhamService sanPhamService;
-    
+
     @Autowired
     private ChiTietSanPhamService chiTietSanPhamService;
 
@@ -251,6 +251,27 @@ public class BanHangClientController {
             HoaDonDetailResponse result = banHangClientService.searchOrderByCode(ma);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // =========================================================================
+    // BỔ SUNG API HỦY ĐƠN HÀNG DÀNH CHO CLIENT
+    // =========================================================================
+    /**
+     * Khách hàng tự hủy đơn hàng.
+     * Trả về lỗi 400 kèm thông báo nếu đơn hàng đang ở trạng thái không thể hủy
+     * (VD: Chờ vận chuyển, Đang vận chuyển).
+     */
+    @PutMapping("/huy-don/{hoaDonId}")
+    public ResponseEntity<?> huyDonHang(
+            @PathVariable Integer hoaDonId,
+            @RequestParam(value = "lyDo", required = false) String lyDo) {
+        try {
+            banHangClientService.huyDonHang(hoaDonId, lyDo);
+            return ResponseEntity.ok("Hủy đơn hàng thành công");
+        } catch (Exception e) {
+            // Trả về câu thông báo lỗi từ Service (VD: "Không thể hủy đơn hàng khi đơn đang ở trạng thái Chờ vận chuyển...")
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
