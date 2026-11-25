@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router' // Bổ sung useRouter
 import { customerAPI } from '@/api/customerAPI'
 import authService from '@/services/authService.js'
 
 const route = useRoute()
+const router = useRouter() // Khởi tạo router để chuyển trang
 
 const loading = ref(false)
 const error = ref('')
@@ -12,11 +13,13 @@ const orders = ref([])
 const selectedStatus = ref(null)
 const searchCode = ref('')
 
+// --- BIẾN CHO CHỨC NĂNG MUA LẠI ---
+const isLoadingMuaLai = ref(null) // Lưu ID đơn hàng đang xử lý để hiện loading trên nút
+const toastMessage = ref({ text: '', type: '' }) // Quản lý thông báo (Toast)
+
 const isAuthenticated = computed(() => authService.isAuthenticated())
 
 // Trạng thái đơn khớp với backend (HoaDonStatus).
-// Luồng: Chờ xác nhận -> Đã xác nhận -> Chờ vận chuyển -> Đang vận chuyển -> Đã hoàn thành;
-// nhánh: Giao thất bại -> Đã hoàn kho.
 const orderStatuses = [
   { id: null, name: 'Tất cả' },
   { id: 1, name: 'Chờ xác nhận' },
@@ -83,7 +86,6 @@ const getStatusText = (statusId) => {
 
 const getStatusClass = (statusId) => `st-status--${STATUS_TONE[statusId] || 'wait'}`
 
-// Đếm số đơn theo từng trạng thái để hiện trên nút lọc
 const countByStatus = (statusId) => {
   if (statusId === null) return orders.value.length
   return orders.value.filter(order => order.trangThai === statusId).length
@@ -134,7 +136,6 @@ const loadOrders = async () => {
       list = response.data
     }
 
-    // Bỏ hóa đơn chờ, mới nhất lên đầu
     orders.value = list
       .filter(order => order.trangThai !== 0)
       .sort((a, b) => {
@@ -154,19 +155,53 @@ const loadOrders = async () => {
   }
 }
 
+// --- HÀM XỬ LÝ MUA LẠI VÀ TOAST ---
+const showToast = (text, type = 'success') => {
+  toastMessage.value = { text, type }
+  setTimeout(() => { toastMessage.value = { text: '', type: '' } }, 3000)
+}
+
+const handleMuaLai = async (orderId) => {
+  try {
+    isLoadingMuaLai.value = orderId
+    
+    // Gọi API từ customerAPI đã cấu hình
+    await customerAPI.muaLaiDonHang(orderId)
+    
+    showToast('Đã thêm các sản phẩm vào giỏ hàng!', 'success')
+    
+    // Đợi 1 giây để người dùng đọc thông báo rồi chuyển sang trang giỏ hàng
+    setTimeout(() => {
+      router.push('/gio-hang') // Đảm bảo route này khớp với router của bạn
+    }, 1000)
+    
+  } catch (err) {
+    console.error('Lỗi mua lại đơn hàng:', err)
+    const errorMsg = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi mua lại đơn hàng!'
+    showToast(errorMsg, 'error')
+  } finally {
+    isLoadingMuaLai.value = null
+  }
+}
+
 onMounted(() => {
-  // Checkout chuyển sang đây kèm mã đơn sau khi đặt hàng
   const orderCode = route.query.orderCode
   if (orderCode) {
     searchCode.value = String(orderCode)
   }
-
   loadOrders()
 })
 </script>
 
 <template>
   <div class="st-page">
+    <!-- TOAST THÔNG BÁO -->
+    <Transition name="fade">
+      <div v-if="toastMessage.text" :class="['st-toast', `st-toast--${toastMessage.type}`]">
+        {{ toastMessage.text }}
+      </div>
+    </Transition>
+
     <!-- Header -->
     <header class="st-head">
       <span class="st-head__jersey" aria-hidden="true">02</span>
@@ -277,6 +312,27 @@ onMounted(() => {
                 <strong>{{ formatCurrency(order.tongTienSauGiam || order.tongTien) }}</strong>
               </p>
             </div>
+
+            <!-- NÚT HÀNH ĐỘNG BỔ SUNG (MUA LẠI / HỖ TRỢ) -->
+            <div class="st-order__actions">
+              <button 
+                @click="handleMuaLai(order.id)" 
+                :disabled="isLoadingMuaLai === order.id" 
+                class="st-btn st-btn--primary st-btn--action"
+              >
+                <svg v-if="isLoadingMuaLai !== order.id" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                {{ isLoadingMuaLai === order.id ? 'ĐANG XỬ LÝ...' : 'MUA LẠI' }}
+              </button>
+              <button class="st-btn st-btn--action st-btn--support">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                HỖ TRỢ
+              </button>
+            </div>
+
           </article>
         </div>
       </template>
@@ -285,8 +341,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Font Nunito đã được tải chung ở index.html, không cần @import font riêng ở đây nữa. */
-
 .st-page {
   --ink: #10141a;
   --strike: #ff3b18;
@@ -301,6 +355,7 @@ onMounted(() => {
   --ship: #1b3bff;
   min-height: 100vh;
   background: var(--mist);
+  position: relative; /* Cần thiết cho Toast absolute */
 }
 
 .st-container {
@@ -309,6 +364,27 @@ onMounted(() => {
   margin: 0 auto;
   padding: 0 1.25rem;
 }
+
+/* ===== Toast Thông Báo ===== */
+.st-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.st-toast--success { background-color: #0f7a3d; }
+.st-toast--error { background-color: #ff3b18; }
+
+/* Hiệu ứng Toast */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
 /* ===== Header ===== */
 .st-head {
@@ -675,6 +751,34 @@ onMounted(() => {
   color: var(--strike);
 }
 
+/* ===== Nút Hành Động (Mua lại / Hỗ trợ) ===== */
+.st-order__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--line);
+}
+
+.st-btn--action {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+}
+
+.st-btn--support {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.st-btn--support:hover {
+  background: var(--mist);
+  border-color: var(--steel);
+}
+
 /* ===== Trạng thái rỗng ===== */
 .st-empty {
   text-align: center;
@@ -708,7 +812,7 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-/* ===== Nút ===== */
+/* ===== Nút chung ===== */
 .st-btn {
   display: inline-flex;
   align-items: center;
@@ -741,6 +845,11 @@ onMounted(() => {
   border-color: var(--strike);
 }
 
+.st-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== Focus bàn phím ===== */
 .st-btn:focus-visible,
 .st-tab:focus-visible,
@@ -756,6 +865,8 @@ onMounted(() => {
   .st-order__top { flex-direction: column; }
   .st-order__foot { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .st-item { flex-wrap: wrap; }
+  .st-order__actions { flex-direction: column; }
+  .st-order__actions .st-btn { width: 100%; }
 }
 
 /* ===== Giảm chuyển động ===== */

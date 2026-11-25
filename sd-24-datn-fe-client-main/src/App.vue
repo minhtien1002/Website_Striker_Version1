@@ -2,7 +2,7 @@
 import { ref, watch, provide, computed, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter, useRoute } from 'vue-router';
-import { useToast } from 'vue-toastification';
+import { useToast } from 'vue-toastification'; // Chỉ import useToast
 
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
@@ -49,8 +49,6 @@ const totalPrice = computed(() => {
   return cart.value.reduce((acc, item) => acc + (item.giaBanHienTai * item.soLuong), 0);
 });
 
-// Cart actions - removed drawer functions
-
 // Function to fetch cart details from the API
 const fetchCartDetails = async () => {
   const savedInvoiceId = localStorage.getItem('currentInvoiceId');
@@ -80,14 +78,11 @@ const fetchCartDetails = async () => {
   } catch (err) {
     console.error('Lỗi khi lấy chi tiết giỏ hàng!', err);
     
-    // If cart loading fails with 400 error, it might be because the invoice is no longer a "pending cart"
-    // (e.g., after successful payment). Clear the localStorage to prevent repeated errors.
     if (err.response?.status === 400) {
       console.log('Cart invoice may have been completed. Clearing localStorage.');
       localStorage.removeItem('currentInvoiceId');
       cart.value = [];
       
-      // Don't show error toast for completed invoices on success pages
       const isSuccessPage = (route.path === '/orders' || route.path === '/account/purchase-history') &&
                            route.query.status === 'success'
       if (!isSuccessPage) {
@@ -107,7 +102,6 @@ const fetchCartDetails = async () => {
 // Function to create pending invoice (new API)
 const createPendingInvoice = async () => {
   try {
-    // Use new cart API to create pending invoice
     const response = await axios.post(`${banHangClientUrl}/hoa-don-cho`);
     return response.data;
   } catch (err) {
@@ -116,6 +110,7 @@ const createPendingInvoice = async () => {
     return null;
   }
 };
+
 // Function to add an item to the cart
 const addToCart = async (item) => {
   const ok = await confirm({
@@ -127,10 +122,8 @@ const addToCart = async (item) => {
   isLoading.value = true;
 
   try {
-    // 1. Check if invoice ID already exists
     let savedInvoiceId = localStorage.getItem('currentInvoiceId');
 
-    // 2. If no invoice ID exists, create a new pending invoice
     if (!savedInvoiceId) {
       const invoiceData = await createPendingInvoice();
       if (!invoiceData) {
@@ -141,9 +134,8 @@ const addToCart = async (item) => {
       localStorage.setItem('currentInvoiceId', savedInvoiceId);
     }
     
-    // 3. Add item to cart using new API
     const addToCartRequest = {
-      idChiTietSanPham: item.id, // Use product detail ID
+      idChiTietSanPham: item.id,
       soLuong: 1,
       gia: item.giaBan || item.price
     };
@@ -153,10 +145,7 @@ const addToCart = async (item) => {
       addToCartRequest
     );
     
-    // 4. Update local cart state
     await fetchCartDetails();
-    
-    // Redirect to cart page instead of opening drawer
     router.push('/cart');
     toast.success('Sản phẩm đã được thêm vào giỏ hàng!');
   } catch (err) {
@@ -185,7 +174,6 @@ const removeFromCart = async (item) => {
     await axios.delete(`${banHangClientUrl}/gio-hang/${savedInvoiceId}/san-pham/${item.cartItemId}`);
     
     await fetchCartDetails();
-    
     toast.info('Sản phẩm đã được xóa khỏi giỏ hàng.');
 
   } catch (err) {
@@ -229,9 +217,6 @@ const updateQuantity = async (id, change) => {
   }
 };
 
-// Removed createOrder and clearCart functions - not needed for new cart system
-
-// Provide data and actions to child components
 provide('cartActions', {
   cart,
   addToCart,
@@ -242,9 +227,6 @@ provide('cartActions', {
   isLoading,
 });
 
-
-// Sau khi thanh toán VNPay quay về: thành công -> giỏ hiện tại là phần còn lại (nếu khách chỉ
-// thanh toán một phần giỏ), thất bại -> gộp phần đã tách trở lại giỏ để khách không mất sản phẩm.
 const handlePaymentReturn = async (query) => {
   if (query.payment !== 'vnpay' || !query.status) return false;
   const key = JSON.stringify(query);

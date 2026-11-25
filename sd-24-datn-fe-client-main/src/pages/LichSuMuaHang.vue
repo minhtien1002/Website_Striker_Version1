@@ -213,17 +213,39 @@
             </button>
 
             <div class="st-order__buttons">
-              <button v-if="order.status === 'delivered' || order.status === 5" class="st-btn st-btn--primary" @click="reorderItems(order)">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Mua lại
+              <!-- YÊU CẦU TRẢ HÀNG: Chỉ hiện khi đơn đã hoàn thành (5) -->
+              <button v-if="order.status === 5" class="st-btn st-btn--danger" @click="openReturnModal(order)">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                Yêu cầu trả hàng
               </button>
-              <button v-else-if="order.status === 'shipped' || order.status === 4" class="st-btn st-btn--done" @click="trackOrder(order)">
+              
+              <!-- ĐANG CHỜ DUYỆT TRẢ HÀNG: Hiển thị khi trạng thái là 7 -->
+              <button v-else-if="order.status === 7" class="st-btn st-btn--work" disabled>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Chờ duyệt trả hàng
+              </button>
+
+              <!-- ĐÃ HOÀN HÀNG: Hiển thị khi trạng thái là 8 -->
+              <button v-else-if="order.status === 8" class="st-btn st-btn--done" disabled>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Đã hoàn hàng
+              </button>
+
+              <!-- MUA LẠI: Cho đơn đã hoàn thành (5) hoặc giao thất bại (9) -->
+              <button v-if="order.status === 5 || order.status === 9" class="st-btn st-btn--primary" @click="reorderItems(order)" :disabled="isLoadingMuaLai === order.id">
+                <svg v-if="isLoadingMuaLai !== order.id" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                {{ isLoadingMuaLai === order.id ? 'Đang xử lý...' : 'Mua lại' }}
+              </button>
+              
+              <button v-else-if="order.status === 4" class="st-btn st-btn--done" @click="trackOrder(order)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Theo dõi
               </button>
               <button v-else-if="order.status === 6" class="st-btn" disabled>Đã hủy</button>
-              <!-- Nhãn phải khớp trạng thái thật của đơn, không chốt cứng "Chờ xử lý" -->
-              <button v-else class="st-btn st-btn--work" disabled>{{ getStatusText(order.status) }}</button>
+              
+              <!-- Các trạng thái khác (1, 2, 3) -->
+              <button v-else-if="order.status !== 7 && order.status !== 8" class="st-btn st-btn--work" disabled>{{ getStatusText(order.status) }}</button>
+
               <button class="st-btn" @click="contactSupport(order)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                 Hỗ trợ
@@ -370,12 +392,44 @@
         </div>
       </div>
     </div>
+
+    <!-- ==================================================== -->
+    <!-- MODAL: YÊU CẦU TRẢ HÀNG                              -->
+    <!-- ==================================================== -->
+    <div v-if="showReturnModal" class="st-modal-overlay">
+      <div class="st-modal">
+        <div class="st-modal__header">
+          <h3>Yêu cầu trả hàng</h3>
+          <button class="st-modal__close" @click="showReturnModal = false">&times;</button>
+        </div>
+        <div class="st-modal__body">
+          <p class="st-detail-block__hint" style="margin-bottom: 16px; font-size: 0.95rem;">
+            Vui lòng cho chúng tôi biết lý do bạn muốn trả lại sản phẩm. Cửa hàng sẽ liên hệ lại để xử lý.
+          </p>
+          <div class="st-form-group">
+            <label class="st-form-label">Lý do trả hàng <span class="st-required">*</span></label>
+            <textarea 
+              v-model="returnReason" 
+              class="st-textarea" 
+              rows="4" 
+              placeholder="VD: Sản phẩm bị rách, giao sai màu/size, không đúng mô tả..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="st-modal__footer">
+          <button class="st-btn" @click="showReturnModal = false" :disabled="isSubmitting">Hủy bỏ</button>
+          <button class="st-btn st-btn--danger" @click="submitReturnRequest" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { customerAPI } from '@/api/customerAPI'
 import authService from '@/services/authService.js'
@@ -399,7 +453,21 @@ const lastRefreshTime = ref(null)
 
 // Route and toast for success messages
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
+
+// --- TRẠNG THÁI CHO MODAL YÊU CẦU TRẢ HÀNG ---
+const showReturnModal = ref(false)
+const returnReason = ref('')
+const selectedOrder = ref(null)
+const isSubmitting = ref(false)
+
+// --- TRẠNG THÁI CHO CHỨC NĂNG MUA LẠI ---
+const isLoadingMuaLai = ref(null)
+
+// Lấy thông tin khách hàng đăng nhập
+const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}')
+const customerId = userInfo?.customerId || null
 
 // Ảnh dự phòng khi ảnh áo bị lỗi
 const FALLBACK_IMAGE =
@@ -419,8 +487,6 @@ const onImageError = (event) => {
 }
 
 // Khớp với bảng mã trạng thái của backend (HoaDonStatus).
-// Luồng: Chờ xác nhận -> Đã xác nhận -> Chờ vận chuyển -> Đang vận chuyển -> Đã hoàn thành;
-// nhánh: Giao thất bại -> Đã hoàn kho.
 const filterOptions = ref([
   { value: 'all', label: 'Tất cả' },
   { value: 0, label: 'Hóa đơn chờ' },
@@ -430,6 +496,8 @@ const filterOptions = ref([
   { value: 4, label: 'Đang vận chuyển' },
   { value: 5, label: 'Đã hoàn thành' },
   { value: 6, label: 'Đã hủy' },
+  { value: 7, label: 'Yêu cầu hoàn hàng' },
+  { value: 8, label: 'Đã hoàn hàng' },
   { value: 9, label: 'Giao thất bại' },
   { value: 10, label: 'Đã hoàn kho' }
 ])
@@ -443,37 +511,31 @@ const loadOrderHistory = async () => {
     loading.value = true
     error.value = ''
 
-    // Check authentication
     if (!authService.isAuthenticated()) {
       error.value = 'Vui lòng đăng nhập để xem lịch sử đơn hàng'
       loading.value = false
       return
     }
 
-    const response = await customerAPI.getOrderHistory(0, 50) // Load all orders
+    const response = await customerAPI.getOrderHistory(0, 50)
 
     if (response && response.success && response.data) {
-      // Handle paginated response
       let orderData = response.data.data?.content || response.data.content || []
 
       // Filter out "Hóa đơn chờ" (status 0)
       orderData = orderData.filter(order => order.trangThai !== 0)
 
       if (Array.isArray(orderData) && orderData.length > 0) {
-        // Process orders with real items from backend
         orders.value = orderData.map(order => {
-
           return {
             id: order.id,
             ma: order.ma,
-            // Hiện cả ngày lẫn giờ (trước đây chỉ có ngày) theo múi giờ Việt Nam - backend trả
-            // thời gian dạng UTC nên phải chỉ rõ timeZone, không để trình duyệt tự đoán.
             date: order.ngayTao ? new Date(order.ngayTao).toLocaleString('vi-VN', {
               day: '2-digit', month: '2-digit', year: 'numeric',
               hour: '2-digit', minute: '2-digit', hour12: false,
               timeZone: 'Asia/Ho_Chi_Minh'
             }) : 'N/A',
-            rawDate: order.ngayTao ? new Date(order.ngayTao) : new Date(0), // Raw date for sorting
+            rawDate: order.ngayTao ? new Date(order.ngayTao) : new Date(0),
             status: mapBackendStatus(order.trangThai),
             total: order.tongTienSauGiam || order.tongTien || 0,
             subtotal: order.tongTien || 0,
@@ -484,7 +546,6 @@ const loadOrderHistory = async () => {
             customerEmail: order.email || 'N/A',
             note: order.ghiChu || '',
             orderType: order.loaiDon || 'Online',
-            // Use real items from backend or fallback
             items: order.items && order.items.length > 0 ? order.items : [
               {
                 id: 1,
@@ -509,24 +570,18 @@ const loadOrderHistory = async () => {
             }
           }
         })
-
-        console.log('Processed orders:', orders.value)
         toast.success(`Đã tải ${orders.value.length} đơn hàng`)
       } else {
         orders.value = []
-        console.log('No orders found in response')
         toast.info('Bạn chưa có đơn hàng nào')
       }
     } else {
-      console.error('Unexpected API response format:', response)
       error.value = 'Không thể tải dữ liệu đơn hàng'
       orders.value = []
     }
   } catch (err) {
     console.error('Error loading order history:', err)
     error.value = 'Không thể tải lịch sử đơn hàng: ' + (err.response?.data?.message || err.message)
-
-    // Không hiện đơn hàng giả khi lỗi API - khách sẽ tưởng là đơn thật của mình
     orders.value = []
     toast.error('Không thể tải lịch sử đơn hàng. Vui lòng thử lại.')
   } finally {
@@ -537,12 +592,8 @@ const loadOrderHistory = async () => {
 // Load order items details
 const loadOrderItems = async (orderId) => {
   try {
-    console.log('Loading detailed items for order:', orderId)
     const response = await customerAPI.getOrderDetails(orderId)
-    console.log('Order details response:', response)
-
     if (response.success && response.data) {
-      // Check if items exist in response
       if (response.data.items && Array.isArray(response.data.items) && response.data.items.length > 0) {
         return response.data.items.map(item => ({
           id: item.id,
@@ -553,7 +604,6 @@ const loadOrderItems = async (orderId) => {
           price: item.donGia || item.giaBan || 0
         }))
       } else {
-        // If no items in response, return enhanced default item
         const order = response.data.order
         return [
           {
@@ -572,7 +622,6 @@ const loadOrderItems = async (orderId) => {
     toast.warning('Không thể tải chi tiết sản phẩm từ server')
   }
 
-  // Fallback item
   return [
     {
       id: 1,
@@ -585,9 +634,7 @@ const loadOrderItems = async (orderId) => {
   ]
 }
 
-// Map backend status to frontend status
 const mapBackendStatus = (backendStatus) => {
-  // Keep numeric status for proper filtering
   return backendStatus
 }
 
@@ -628,6 +675,15 @@ const generateTimeline = (status) => {
       completed: true
     })
   }
+  
+  if (status === 7 || status === 8) {
+    baseTimeline.push({
+      title: 'Yêu cầu trả hàng',
+      description: 'Đang chờ cửa hàng xử lý yêu cầu trả hàng',
+      time: new Date().toLocaleDateString('vi-VN'),
+      completed: true
+    })
+  }
 
   return baseTimeline
 }
@@ -643,8 +699,6 @@ const handleVNPayReturn = () => {
         timeout: 5000,
         position: 'top-center'
       })
-
-      // Reload order history to show the new order
       setTimeout(() => {
         loadOrderHistory()
       }, 1000)
@@ -655,7 +709,6 @@ const handleVNPayReturn = () => {
       })
     }
 
-    // Clean up URL parameters
     const cleanUrl = window.location.pathname
     window.history.replaceState({}, document.title, cleanUrl)
   }
@@ -663,17 +716,12 @@ const handleVNPayReturn = () => {
 
 // Initialize data
 onMounted(() => {
-  // Handle VNPay return callback
   handleVNPayReturn()
 
-  // Check for payment success from redirect
   const paymentMethod = route.query.payment
   const paymentStatus = route.query.status
 
   if (paymentMethod && paymentStatus === 'success') {
-    console.log('Payment success detected, will refresh orders after loading...')
-
-    // Show payment success message
     setTimeout(() => {
       if (paymentMethod === 'vnpay') {
         toast.success('Thanh toán VNPay thành công!')
@@ -682,22 +730,55 @@ onMounted(() => {
       }
     }, 500)
 
-    // Auto-refresh orders after initial load to show new order
     setTimeout(() => {
-      console.log('Auto-refreshing orders after payment success...')
       refreshOrders()
-    }, 2000) // Delay to ensure order is processed
+    }, 2000)
   }
 
-  // Load order history
   loadOrderHistory()
 })
+
+// ====================================================
+// LOGIC XỬ LÝ YÊU CẦU TRẢ HÀNG
+// ====================================================
+const openReturnModal = (order) => {
+  selectedOrder.value = order
+  returnReason.value = ''
+  showReturnModal.value = true
+}
+
+const submitReturnRequest = async () => {
+  if (!returnReason.value.trim() || returnReason.value.trim().length < 5) {
+    toast.error('Vui lòng nhập lý do trả hàng (ít nhất 5 ký tự)')
+    return
+  }
+
+  isSubmitting.value = true
+  try {
+    await customerAPI.requestReturnOrder(
+      selectedOrder.value.id, 
+      customerId, 
+      returnReason.value.trim()
+    )
+    
+    toast.success('Đã gửi yêu cầu trả hàng thành công. Vui lòng chờ cửa hàng duyệt!')
+    showReturnModal.value = false
+    await loadOrderHistory()
+    
+  } catch (error) {
+    console.error('Error submitting return request:', error)
+    // Bắt lỗi chi tiết từ Backend trả về (nếu có)
+    const errorMsg = error.response?.data?.message || error.response?.data || error.message || 'Có lỗi xảy ra khi gửi yêu cầu'
+    toast.error(typeof errorMsg === 'string' ? errorMsg : 'Có lỗi xảy ra khi gửi yêu cầu')
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 // Computed properties
 const filteredOrders = computed(() => {
   let filtered = orders.value
 
-  // Apply search filter
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim()
     filtered = filtered.filter(order =>
@@ -707,53 +788,29 @@ const filteredOrders = computed(() => {
     )
   }
 
-  // Apply status filter
   if (activeFilter.value !== 'all') {
     filtered = filtered.filter(order => order.status === activeFilter.value)
   }
 
-  // Sort orders with robust date comparison and ID fallback
   filtered.sort((a, b) => {
     switch (sortBy.value) {
       case 'date-desc':
-        // If rawDates are equal, sort by ID (higher ID = newer)
-        if (b.rawDate - a.rawDate === 0) {
-          return (b.id || 0) - (a.id || 0)
-        }
-        return b.rawDate - a.rawDate // Newest first
+        if (b.rawDate - a.rawDate === 0) return (b.id || 0) - (a.id || 0)
+        return b.rawDate - a.rawDate
       case 'date-asc':
-        // If rawDates are equal, sort by ID (lower ID = older)
-        if (a.rawDate - b.rawDate === 0) {
-          return (a.id || 0) - (b.id || 0)
-        }
-        return a.rawDate - b.rawDate // Oldest first
+        if (a.rawDate - b.rawDate === 0) return (a.id || 0) - (b.id || 0)
+        return a.rawDate - b.rawDate
       case 'amount-desc':
-        // If amounts are equal, sort by date (newest first)
-        if (b.total - a.total === 0) {
-          return b.rawDate - a.rawDate
-        }
+        if (b.total - a.total === 0) return b.rawDate - a.rawDate
         return b.total - a.total
       case 'amount-asc':
-        // If amounts are equal, sort by date (newest first)
-        if (a.total - b.total === 0) {
-          return b.rawDate - a.rawDate
-        }
+        if (a.total - b.total === 0) return b.rawDate - a.rawDate
         return a.total - b.total
       default:
-        // Default to newest first with ID fallback
-        if (b.rawDate - a.rawDate === 0) {
-          return (b.id || 0) - (a.id || 0)
-        }
+        if (b.rawDate - a.rawDate === 0) return (b.id || 0) - (a.id || 0)
         return b.rawDate - a.rawDate
     }
   })
-
-  console.log('Orders sorted (newest first):', filtered.slice(0, 3).map(o => ({
-    id: o.id,
-    date: o.date,
-    rawDate: o.rawDate,
-    sortBy: sortBy.value
-  })))
 
   return filtered
 })
@@ -777,17 +834,11 @@ const visiblePages = computed(() => {
     range.push(i)
   }
 
-  if (current - delta > 2) {
-    range.unshift('...')
-  }
-  if (current + delta < total - 1) {
-    range.push('...')
-  }
+  if (current - delta > 2) range.unshift('...')
+  if (current + delta < total - 1) range.push('...')
 
   range.unshift(1)
-  if (total > 1) {
-    range.push(total)
-  }
+  if (total > 1) range.push(total)
 
   return range.filter((item, index, arr) => arr.indexOf(item) === index)
 })
@@ -800,21 +851,11 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Get color code for color display
 const getColorCode = (colorName) => {
   const colorMap = {
-    'Đỏ': '#ef4444',
-    'Xanh': '#3b82f6',
-    'Vàng': '#eab308',
-    'Đen': '#1f2937',
-    'Trắng': '#f9fafb',
-    'Xám': '#6b7280',
-    'Hồng': '#ec4899',
-    'Tím': '#8b5cf6',
-    'Cam': '#f97316',
-    'Nâu': '#a3a3a3',
-    'Xanh lá': '#22c55e',
-    'Xanh dương': '#3b82f6'
+    'Đỏ': '#ef4444', 'Xanh': '#3b82f6', 'Vàng': '#eab308', 'Đen': '#1f2937', 'Trắng': '#f9fafb',
+    'Xám': '#6b7280', 'Hồng': '#ec4899', 'Tím': '#8b5cf6', 'Cam': '#f97316', 'Nâu': '#a3a3a3',
+    'Xanh lá': '#22c55e', 'Xanh dương': '#3b82f6'
   }
   return colorMap[colorName] || '#9ca3af'
 }
@@ -828,7 +869,10 @@ const getStatusClass = (status) => {
     4: 'st-status--ship',
     5: 'st-status--done',
     6: 'st-status--stop',
-    // Legacy support for old string-based statuses
+    7: 'st-status--work', // Yêu cầu hoàn hàng
+    8: 'st-status--done', // Đã hoàn hàng
+    9: 'st-status--stop', // Giao thất bại
+    10: 'st-status--stop', // Đã hoàn kho
     'delivered': 'st-status--done',
     'shipped': 'st-status--ship',
     'processing': 'st-status--work',
@@ -839,84 +883,43 @@ const getStatusClass = (status) => {
 
 const getStatusText = (status) => {
   const texts = {
-    0: 'Hóa đơn chờ',
-    1: 'Chờ xác nhận',
-    2: 'Đã xác nhận',
-    3: 'Chờ vận chuyển',
-    4: 'Đang vận chuyển',
-    5: 'Đã hoàn thành',
-    6: 'Đã hủy',
-    7: 'Yêu cầu hoàn hàng',
-    8: 'Đã hoàn hàng',
-    9: 'Giao thất bại',
-    10: 'Đã hoàn kho',
-    // Legacy support
-    'delivered': 'Đã hoàn thành',
-    'shipped': 'Đang vận chuyển',
-    'processing': 'Chờ xử lý',
-    'cancelled': 'Đã hủy'
+    0: 'Hóa đơn chờ', 1: 'Chờ xác nhận', 2: 'Đã xác nhận', 3: 'Chờ vận chuyển',
+    4: 'Đang vận chuyển', 5: 'Đã hoàn thành', 6: 'Đã hủy', 7: 'Yêu cầu hoàn hàng',
+    8: 'Đã hoàn hàng', 9: 'Giao thất bại', 10: 'Đã hoàn kho',
+    'delivered': 'Đã hoàn thành', 'shipped': 'Đang vận chuyển',
+    'processing': 'Chờ xử lý', 'cancelled': 'Đã hủy'
   }
   return texts[status] || 'Không xác định'
 }
 
 const getProgressText = (status) => {
   const texts = {
-    // Numeric status from backend (HoaDonStatus)
-    0: 'Hóa đơn chờ',
-    1: 'Chờ xác nhận',
-    2: 'Đã xác nhận',
-    3: 'Chờ vận chuyển',
-    4: 'Đang vận chuyển',
-    5: 'Hoàn thành',
-    6: 'Đã hủy',
-    7: 'Yêu cầu hoàn hàng',
-    8: 'Đã hoàn hàng',
-    9: 'Giao thất bại',
-    10: 'Đã hoàn kho',
-    // Legacy string support
-    'delivered': 'Hoàn thành',
-    'shipped': 'Đang vận chuyển',
-    'processing': 'Đang chuẩn bị',
-    'cancelled': 'Đã hủy'
+    0: 'Hóa đơn chờ', 1: 'Chờ xác nhận', 2: 'Đã xác nhận', 3: 'Chờ vận chuyển',
+    4: 'Đang vận chuyển', 5: 'Hoàn thành', 6: 'Đã hủy', 7: 'Chờ duyệt trả hàng',
+    8: 'Đã hoàn hàng', 9: 'Giao thất bại', 10: 'Đã hoàn kho',
+    'delivered': 'Hoàn thành', 'shipped': 'Đang vận chuyển',
+    'processing': 'Đang chuẩn bị', 'cancelled': 'Đã hủy'
   }
   return texts[status] || 'Không xác định'
 }
 
 const getProgressBarClass = (status) => {
   const classes = {
-    // Numeric status (0-6) from backend
-    0: 'st-progress__bar--wait',
-    1: 'st-progress__bar--wait',
-    2: 'st-progress__bar--work',
-    3: 'st-progress__bar--work',
-    4: 'st-progress__bar--ship',
-    5: 'st-progress__bar--done',
-    6: 'st-progress__bar--stop',
-    // Legacy string support
-    'delivered': 'st-progress__bar--done',
-    'shipped': 'st-progress__bar--ship',
-    'processing': 'st-progress__bar--work',
-    'cancelled': 'st-progress__bar--stop'
+    0: 'st-progress__bar--wait', 1: 'st-progress__bar--wait', 2: 'st-progress__bar--work',
+    3: 'st-progress__bar--work', 4: 'st-progress__bar--ship', 5: 'st-progress__bar--done',
+    6: 'st-progress__bar--stop', 7: 'st-progress__bar--work', 8: 'st-progress__bar--done',
+    9: 'st-progress__bar--stop', 10: 'st-progress__bar--stop',
+    'delivered': 'st-progress__bar--done', 'shipped': 'st-progress__bar--ship',
+    'processing': 'st-progress__bar--work', 'cancelled': 'st-progress__bar--stop'
   }
   return classes[status] || 'st-progress__bar--wait'
 }
 
 const getProgressWidth = (status) => {
   const widths = {
-    // Luồng 5 bước: Chờ xác nhận -> Đã xác nhận -> Chờ vận chuyển -> Đang vận chuyển -> Đã hoàn thành
-    0: '10%',     // Hóa đơn chờ - chưa thực sự đặt hàng
-    1: '20%',     // Chờ xác nhận
-    2: '40%',     // Đã xác nhận
-    3: '60%',     // Chờ vận chuyển
-    4: '80%',     // Đang vận chuyển
-    9: '80%',     // Giao thất bại
-    5: '100%',    // Đã hoàn thành
-    6: '0%',      // Đã hủy
-    // Legacy string support
-    'delivered': '100%',
-    'shipped': '75%',
-    'processing': '25%',
-    'cancelled': '0%'
+    0: '10%', 1: '20%', 2: '40%', 3: '60%', 4: '80%', 5: '100%', 
+    6: '0%', 7: '100%', 8: '100%', 9: '80%', 10: '100%',
+    'delivered': '100%', 'shipped': '75%', 'processing': '25%', 'cancelled': '0%'
   }
   return widths[status] || '0%'
 }
@@ -933,11 +936,9 @@ const toggleOrderDetails = async (orderId) => {
   } else {
     expandedOrders.value.push(orderId)
 
-    // Load detailed items when expanding for the first time
     const order = orders.value.find(o => o.id === orderId)
     if (order && order.items.length === 1 && order.items[0].name.includes('Sản phẩm trong đơn hàng')) {
       try {
-        console.log('Loading detailed items for order:', orderId)
         const detailedItems = await loadOrderItems(orderId)
         order.items = detailedItems
       } catch (err) {
@@ -948,10 +949,24 @@ const toggleOrderDetails = async (orderId) => {
   }
 }
 
-const reorderItems = (order) => {
-  toast.info('Chức năng mua lại đang được phát triển')
-  // TODO: Implement reorder functionality
-  console.log('Reordering items for order:', order.id)
+// ====================================================
+// LOGIC XỬ LÝ MUA LẠI ĐƠN HÀNG
+// ====================================================
+const reorderItems = async (order) => {
+  try {
+    isLoadingMuaLai.value = order.id
+    await customerAPI.muaLaiDonHang(order.id, customerId)
+    toast.success('Đã thêm các sản phẩm vào giỏ hàng!')
+    setTimeout(() => {
+      router.push('/cart')
+    }, 1000)
+  } catch (error) {
+    console.error('Lỗi mua lại đơn hàng:', error)
+    const errorMsg = error.response?.data?.message || error.message || 'Có lỗi xảy ra khi mua lại đơn hàng!'
+    toast.error(errorMsg)
+  } finally {
+    isLoadingMuaLai.value = null
+  }
 }
 
 const trackOrder = (order) => {
@@ -960,17 +975,24 @@ const trackOrder = (order) => {
   } else {
     toast.info('Chưa có thông tin vận chuyển')
   }
-  // TODO: Implement order tracking
-  console.log('Tracking order:', order.id)
 }
 
 const contactSupport = (order) => {
-  toast.info('Đang chuyển hướng đến trang hỗ trợ...')
-  // TODO: Implement support contact
-  console.log('Contacting support for order:', order.id)
+  if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+    window.Tawk_API.maximize();
+    window.Tawk_API.addEvent('yeu_cau_ho_tro_don_hang', {
+      "Ma_Don_Hang": order.ma || order.id,
+      "Ten_Khach_Hang": order.customerName,
+      "Trang_Thai_Don": getStatusText(order.status),
+      "Tong_Tien": formatCurrency(order.total)
+    }, function(error) {
+      if (error) console.error("Lỗi gửi event Tawk:", error);
+    });
+  } else {
+    toast.warning('Đang tải khung chat, bạn vui lòng thử lại sau giây lát hoặc tải lại trang!');
+  }
 }
 
-// Refresh orders
 const refreshOrders = async () => {
   isRefreshing.value = true
   try {
@@ -984,32 +1006,28 @@ const refreshOrders = async () => {
   }
 }
 
-// Quick stats
 const quickStats = computed(() => {
   const total = orders.value.length
   const completed = orders.value.filter(o => o.status === 'delivered' || o.status === 5).length
-  const processing = orders.value.filter(o => ['processing', 1, 2, 3, 4].includes(o.status)).length
+  const processing = orders.value.filter(o => ['processing', 1, 2, 3, 4, 7].includes(o.status)).length
   const cancelled = orders.value.filter(o => o.status === 'cancelled' || o.status === 6).length
 
   return { total, completed, processing, cancelled }
 })
 
-// Watch for filter changes to reset pagination
 watch([activeFilter, searchQuery], () => {
   currentPage.value = 1
 })
 
-// Auto refresh every 5 minutes
 let refreshInterval = null
 onMounted(() => {
   refreshInterval = setInterval(() => {
     if (!loading.value && !isRefreshing.value) {
       refreshOrders()
     }
-  }, 5 * 60 * 1000) // 5 minutes
+  }, 5 * 60 * 1000)
 })
 
-// Cleanup interval on unmount
 onUnmounted(() => {
   if (refreshInterval) {
     clearInterval(refreshInterval)
@@ -1164,6 +1182,8 @@ onUnmounted(() => {
 .st-btn--primary:hover { background: var(--strike); border-color: var(--strike); }
 .st-btn--done { background: var(--done); border-color: var(--done); color: var(--chalk); }
 .st-btn--work { background: #fff6e5; border-color: #fbd38d; color: var(--work); }
+.st-btn--danger { background: var(--strike); border-color: var(--strike); color: var(--chalk); }
+.st-btn--danger:hover { background: #d92e0f; border-color: #d92e0f; }
 
 /* Expanded */
 .st-order__expanded { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 2px solid var(--ink); display: flex; flex-direction: column; gap: 1.5rem; }
@@ -1262,5 +1282,94 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: reduce) {
   .st-btn, .st-refresh, .st-progress__bar { transition: none; }
   .st-refresh svg.is-spinning, .st-skeleton { animation: none; }
+}
+
+/* ========================================= */
+/* CSS CHO MODAL YÊU CẦU TRẢ HÀNG            */
+/* ========================================= */
+.st-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.st-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.st-modal__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.st-modal__header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.st-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--steel);
+}
+
+.st-modal__body {
+  padding: 20px;
+}
+
+.st-modal__footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.st-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.st-form-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.st-required {
+  color: var(--strike);
+}
+
+.st-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.st-textarea:focus {
+  border-color: var(--strike);
 }
 </style>

@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_BASE_URL = 'http://localhost:8080/api'
+// Địa chỉ API Backend. Nếu dự án của bạn dùng Vite Proxy, hãy đổi thành '/api'
+const API_BASE_URL = 'http://localhost:8085/api'
 
 // Create axios instance with authentication
 const createAuthenticatedAPI = () => {
@@ -13,14 +14,6 @@ const createAuthenticatedAPI = () => {
     }
   })
 
-  // Nếu tài khoản đang lưu ở trình duyệt không còn tồn tại/hợp lệ ở backend
-  // (vd: đã bị xoá, hoặc dữ liệu localStorage cũ còn sót lại sau khi DB được
-  // reseed), các API /khach-hang-client/* trả 404 với message cụ thể
-  // "Không tìm thấy tài khoản". Chỉ dọn phiên đăng nhập khi ĐÚNG message này —
-  // tuyệt đối không dọn cho MỌI lỗi 404 (vd "không tìm thấy đơn hàng",
-  // "chưa có địa chỉ nào"...), vì đó là 404 hợp lệ của một tài khoản còn tồn
-  // tại, không phải dấu hiệu session hỏng. Bug cũ từng đăng xuất nhầm khách
-  // đang hoạt động bình thường chỉ vì 1 API con trả 404 không liên quan.
   api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -43,25 +36,19 @@ const createAuthenticatedAPI = () => {
 
 // Helper function to get taiKhoanId from authenticated user
 const getTaiKhoanId = () => {
-  // Get from authenticated user info
   const userInfo = localStorage.getItem('user_info')
-
   if (userInfo) {
     try {
       const user = JSON.parse(userInfo)
-      return user.id // This is the taiKhoan ID from authentication
+      return user.id
     } catch (error) {
       console.error('Error parsing user info:', error)
     }
   }
-
-  // Fallback: try to get from localStorage (for testing)
   const taiKhoanId = localStorage.getItem('taiKhoanId')
-
   if (taiKhoanId) {
     return parseInt(taiKhoanId)
   }
-
   return 9 // Default fallback for testing
 }
 
@@ -95,12 +82,9 @@ export const customerAPI = {
   getOrderHistory: async (page = 0, size = 10, taiKhoanId = null) => {
     const api = createAuthenticatedAPI()
     const accountId = taiKhoanId || getTaiKhoanId()
-    
     const response = await api.get('/khach-hang-client/orders', {
       params: { taiKhoanId: accountId, page, size }
     })
-    
-    
     return response.data
   },
 
@@ -113,7 +97,6 @@ export const customerAPI = {
     })
     return response.data
   },
-
 
   // Get customer addresses
   getAddresses: async (taiKhoanId = null) => {
@@ -177,18 +160,86 @@ export const customerAPI = {
     }
   },
 
+  // =========================================================================
+  // API YÊU CẦU TRẢ HÀNG (ĐÃ CẬP NHẬT BẮT LỖI CHUẨN XÁC)
+  // =========================================================================
+  /**
+   * Gửi yêu cầu trả hàng (Hoàn hàng)
+   * Endpoint chuẩn: PUT /api/hoa-don/{orderId}/yeu-cau-hoan-hang?idKhachHangActor=...&lyDo=...
+   */
+  requestReturnOrder: async (orderId, customerId, lyDo) => {
+    const api = createAuthenticatedAPI()
+    const actorId = customerId || getTaiKhoanId()
+
+    try {
+      // Gửi request với method PUT. 
+      // Tham số thứ 2 là body (null vì không có body). 
+      // Tham số thứ 3 là config (chứa params).
+      const response = await api.put(`/hoa-don/${orderId}/yeu-cau-hoan-hang`, null, {
+        params: {
+          idKhachHangActor: actorId,
+          lyDo: lyDo
+        }
+      })
+      return response.data
+      
+    } catch (error) {
+      // 1. Bắt lỗi 500 (Backend crash, NullPointerException, DataIntegrity...)
+      if (error.response && error.response.status === 500) {
+        // Backend đã được sửa để luôn trả về data.message, nhưng nếu có lỗi khác vẫn bắt được
+        const backendMsg = error.response.data?.message;
+        throw new Error(backendMsg || "Hệ thống đang gặp sự cố xử lý. Vui lòng thử lại sau ít phút!");
+      }
+      
+      // 2. Bắt lỗi 400 (Lỗi logic nghiệp vụ: Đơn chưa giao, lý do rỗng...)
+      if (error.response && error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
+      
+      // 3. Lỗi mất kết nối mạng hoặc lỗi không xác định khác
+      throw new Error("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền mạng!");
+    }
+  },
+
+  // =========================================================================
+  // API MUA LẠI ĐƠN HÀNG
+  // =========================================================================
+  muaLaiDonHang: async (orderId, customerId = null) => {
+    const api = createAuthenticatedAPI()
+    
+    let idKhachHang = customerId;
+    if (!idKhachHang) {
+      const user = customerAPI.getCurrentUser();
+      idKhachHang = user?.khachHangId || user?.id; 
+    }
+
+    if (!idKhachHang) {
+      throw new Error('Không tìm thấy ID khách hàng. Vui lòng đăng nhập lại!');
+    }
+
+    try {
+      const response = await api.post(`/hoa-don/${orderId}/mua-lai`, null, {
+        params: { idKhachHang: idKhachHang }
+      })
+      return response.data
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error("Không thể thực hiện mua lại đơn hàng lúc này!");
+    }
+  },
+
   // Helper methods
   setTaiKhoanId: setTaiKhoanId,
   getTaiKhoanId: getTaiKhoanId,
 
-  // Check if user is authenticated
   isAuthenticated: () => {
     const isLoggedIn = localStorage.getItem('is_logged_in') === 'true'
     const userInfo = localStorage.getItem('user_info')
     return isLoggedIn && userInfo
   },
 
-  // Get current user info
   getCurrentUser: () => {
     const userInfo = localStorage.getItem('user_info')
     if (userInfo) {

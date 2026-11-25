@@ -17,7 +17,8 @@ import { useConfirm } from '@/composables/useConfirm.js'
  *  - chỉ thao tác rủi ro (xóa/chốt đơn) mới hỏi xác nhận.
  */
 const API = 'http://localhost:8080/api'
-const PROVINCE_API = 'https://provinces.open-api.vn/api'
+// Cập nhật sang API v2 (2 cấp: Tỉnh/Thành phố -> Phường/Xã)
+const PROVINCE_API = 'https://provinces.open-api.vn/api/v2' 
 const router = useRouter()
 const toast = useToast()
 const { confirm } = useConfirm()
@@ -82,19 +83,18 @@ const errors = reactive({})
 const addresses = ref([])
 const addressMode = ref('saved') // saved | new
 const selectedAddressId = ref(null)
-const newAddr = reactive({ tinh: '', quan: '', phuong: '', chiTiet: '' })
+const newAddr = reactive({ tinh: '', phuong: '', chiTiet: '' })
 const provinces = ref([])
-const districts = ref([])
 const wards = ref([])
 
 const savedAddress = computed(() => addresses.value.find((a) => a.id === selectedAddressId.value) || null)
 const fullAddress = computed(() => {
   if (addressMode.value === 'saved' && savedAddress.value) {
     const a = savedAddress.value
-    return `${a.diaChiCuThe}, ${a.phuong}, ${a.quan}, ${a.thanhPho}`
+    return [a.diaChiCuThe, a.phuong, a.quan, a.thanhPho].filter(Boolean).join(', ')
   }
-  if (newAddr.chiTiet.trim() && newAddr.phuong && newAddr.quan && newAddr.tinh) {
-    return `${newAddr.chiTiet.trim()}, ${newAddr.phuong}, ${newAddr.quan}, ${newAddr.tinh}`
+  if (newAddr.chiTiet.trim() && newAddr.phuong && newAddr.tinh) {
+    return `${newAddr.chiTiet.trim()}, ${newAddr.phuong}, ${newAddr.tinh}`
   }
   return ''
 })
@@ -116,17 +116,20 @@ const loadProfile = async () => {
 }
 
 const loadProvinces = async () => {
-  try { provinces.value = (await axios.get(`${PROVINCE_API}/p/`)).data } catch { provinces.value = [] }
+  try { 
+    provinces.value = (await axios.get(`${PROVINCE_API}/p/`)).data 
+  } catch { provinces.value = [] }
 }
+
 watch(() => newAddr.tinh, async (name) => {
-  newAddr.quan = ''; newAddr.phuong = ''; districts.value = []; wards.value = []
-  const p = provinces.value.find((x) => x.name === name)
-  if (p) try { districts.value = (await axios.get(`${PROVINCE_API}/p/${p.code}?depth=2`)).data.districts || [] } catch { /* bỏ qua */ }
-})
-watch(() => newAddr.quan, async (name) => {
   newAddr.phuong = ''; wards.value = []
-  const d = districts.value.find((x) => x.name === name)
-  if (d) try { wards.value = (await axios.get(`${PROVINCE_API}/d/${d.code}?depth=2`)).data.wards || [] } catch { /* bỏ qua */ }
+  const p = provinces.value.find((x) => x.name === name)
+  if (p) {
+    try { 
+      const res = await axios.get(`${PROVINCE_API}/p/${p.code}?depth=2`)
+      wards.value = res.data.wards || [] 
+    } catch { /* bỏ qua */ }
+  }
 })
 
 // ---------------- Phí vận chuyển (API) ----------------
@@ -146,7 +149,7 @@ watch([fullAddress, totalQty], () => {
   }, 350)
 })
 
-// ---------------- Phiếu giảm giá (tự chọn phiếu tốt nhất) ----------------
+// ---------------- Phiếu giảm giá ----------------
 const vouchers = ref([])
 const voucherId = ref(null)
 const manualVoucher = ref(false)
@@ -225,7 +228,7 @@ const placeOrder = async () => {
   const invoiceId = localStorage.getItem('currentInvoiceId')
   let remainderId = null
   try {
-    // Tách phần không tích chọn sang giỏ mới để giữ lại
+    // SỬA LỖI TẠI ĐÂY: Đường dẫn API tách giỏ hàng
     if (selectedItems.value.length < items.value.length) {
       const { data } = await axios.post(`${API}/ban-hang-client/gio-hang/${invoiceId}/tach`, { cartItemIds: selected.value })
       remainderId = data.hoaDonConLai
@@ -254,7 +257,7 @@ const placeOrder = async () => {
       ? { path: '/account/purchase-history' }
       : { path: '/orders', query: { orderCode: order.maHoaDon || order.ma, autoSearch: 'true' } })
   } catch (e) {
-    // Đặt hàng lỗi sau khi đã tách giỏ: gộp phần tách trở lại để khách không mất sản phẩm
+    // SỬA LỖI TẠI ĐÂY: Đường dẫn API gộp lại giỏ hàng nếu đặt hàng thất bại
     if (remainderId) {
       try { await axios.post(`${API}/ban-hang-client/gio-hang/${remainderId}/gop-vao/${invoiceId}`) } catch { /* bỏ qua */ }
       localStorage.removeItem('pendingRemainderInvoiceId')
@@ -270,7 +273,7 @@ onMounted(async () => {
   const q = router.currentRoute.value.query
   if (q.payment === 'vnpay' && q.status && q.status !== 'success') {
     toast.error('Thanh toán VNPay chưa thành công. Sản phẩm vẫn được giữ trong giỏ hàng, bạn có thể thử lại.')
-    await new Promise((r) => setTimeout(r, 400)) // đợi App gộp lại giỏ đã tách
+    await new Promise((r) => setTimeout(r, 400))
   }
   await Promise.all([loadCart(), loadProfile(), loadProvinces()])
 })
@@ -363,14 +366,24 @@ onMounted(async () => {
             <template v-if="addressMode === 'saved' && addresses.length">
               <label v-for="a in addresses" :key="a.id" style="display:flex;gap:8px;align-items:flex-start;font-weight:500;padding:8px;border:1px solid var(--c-line);margin-bottom:6px;cursor:pointer">
                 <input type="radio" :value="a.id" v-model="selectedAddressId" />
-                <span>{{ a.diaChiCuThe }}, {{ a.phuong }}, {{ a.quan }}, {{ a.thanhPho }} <span v-if="a.macDinh" class="cx-badge on">Mặc định</span></span>
+                <span>
+                  {{ [a.diaChiCuThe, a.phuong, a.quan, a.thanhPho].filter(Boolean).join(', ') }} 
+                  <span v-if="a.macDinh" class="cx-badge on">Mặc định</span>
+                </span>
               </label>
             </template>
             <template v-else>
               <div class="cx-row">
-                <select v-model="newAddr.tinh" class="cx-select"><option value="">Tỉnh / Thành phố</option><option v-for="p in provinces" :key="p.code" :value="p.name">{{ p.name }}</option></select>
-                <select v-model="newAddr.quan" class="cx-select" :disabled="!districts.length"><option value="">Quận / Huyện</option><option v-for="d in districts" :key="d.code" :value="d.name">{{ d.name }}</option></select>
-                <select v-model="newAddr.phuong" class="cx-select" :disabled="!wards.length"><option value="">Phường / Xã</option><option v-for="w in wards" :key="w.code" :value="w.name">{{ w.name }}</option></select>
+                <select v-model="newAddr.tinh" class="cx-select">
+                  <option value="">Tỉnh / Thành phố</option>
+                  <option v-for="p in provinces" :key="p.code" :value="p.name">{{ p.name }}</option>
+                </select>
+                
+                <select v-model="newAddr.phuong" class="cx-select" :disabled="!newAddr.tinh">
+                  <option value="">Phường / Xã</option>
+                  <option v-for="w in wards" :key="w.code" :value="w.name">{{ w.name }}</option>
+                </select>
+                
                 <input v-model="newAddr.chiTiet" class="cx-input" maxlength="200" placeholder="Số nhà, tên đường" />
               </div>
             </template>

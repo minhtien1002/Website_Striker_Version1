@@ -10,8 +10,9 @@ import './assets/theme.css' // giao diện phẳng dùng chung - nạp sau cùng
 import axios from 'axios'
 import { Icon } from '@iconify/vue';
 
-// Gắn axios vào global properties để có thể sử dụng trong mọi component
 const app = createApp(App)
+
+// Gắn axios vào global properties để có thể sử dụng trong mọi component
 app.config.globalProperties.$axios = axios;
 
 const pinia = createPinia()
@@ -21,6 +22,7 @@ app.use(autoAnimatePlugin);
 
 // Register Iconify Icon component globally
 app.component('iconify-icon', Icon);
+
 // Cài đặt Vue Toastification
 app.use(Toast, {
   position: 'top-right',

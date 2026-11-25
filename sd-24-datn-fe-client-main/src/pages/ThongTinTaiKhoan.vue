@@ -374,21 +374,26 @@
                 </svg>
                 Địa chỉ giao hàng
               </h4>
-              <div class="st-form__grid st-form__grid--3">
+              
+              <!-- ĐÃ SỬA: Bỏ Quận/Huyện, chuyển thành 2 cột Select -->
+              <div class="st-form__grid">
                 <div class="st-form__field">
                   <label class="st-label">Tỉnh/Thành phố *</label>
-                  <input v-model="addressForm.thanhPho" type="text" required class="st-input" placeholder="VD: Hồ Chí Minh">
-                </div>
-                <div class="st-form__field">
-                  <label class="st-label">Quận/Huyện *</label>
-                  <input v-model="addressForm.quan" type="text" required class="st-input" placeholder="VD: Quận 1">
+                  <select v-model="addressForm.thanhPho" @change="handleProvinceChange" required class="st-select">
+                    <option value="" disabled>Chọn Tỉnh/Thành phố</option>
+                    <option v-for="p in provinces" :key="p.code" :value="p.name">{{ p.name }}</option>
+                  </select>
                 </div>
                 <div class="st-form__field">
                   <label class="st-label">Phường/Xã *</label>
-                  <input v-model="addressForm.phuong" type="text" required class="st-input" placeholder="VD: Phường Bến Nghé">
+                  <select v-model="addressForm.phuong" required class="st-select" :disabled="!addressForm.thanhPho">
+                    <option value="" disabled>Chọn Phường/Xã</option>
+                    <option v-for="w in wards" :key="w.code" :value="w.name">{{ w.name }}</option>
+                  </select>
                 </div>
               </div>
-              <div class="st-form__field">
+              
+              <div class="st-form__field" style="margin-top: 1.25rem;">
                 <label class="st-label">Địa chỉ cụ thể *</label>
                 <textarea v-model="addressForm.diaChiCuThe" required rows="3" class="st-input st-textarea" placeholder="Số nhà, tên đường, hẻm... (VD: 123 Nguyễn Huệ, Hẻm 45)"></textarea>
               </div>
@@ -439,6 +444,7 @@ import { customerAPI } from '@/api/customerAPI'
 import NotificationToast from '@/components/NotificationToast.vue'
 import { useAvatar } from '@/composables/useAvatar.js'
 import { useConfirm } from '@/composables/useConfirm.js'
+import axios from 'axios' // BỔ SUNG: Dùng để gọi API Tỉnh/Phường
 
 const { confirm: hoiXacNhan } = useConfirm()
 
@@ -460,7 +466,6 @@ const showNotification = (message, type = 'success') => {
   toastType.value = type
   showToast.value = true
 
-  // Auto hide after 3 seconds
   setTimeout(() => {
     showToast.value = false
   }, 3000)
@@ -495,16 +500,20 @@ const personalInfo = reactive({
 // Addresses
 const addresses = ref([])
 
-// Address Form
+// ĐÃ SỬA: Form địa chỉ bỏ trường 'quan'
 const addressForm = reactive({
   tenNguoiNhan: '',
   soDienThoai: '',
   thanhPho: '',
-  quan: '',
   phuong: '',
   diaChiCuThe: '',
   macDinh: false
 })
+
+// BỔ SUNG: Biến lưu danh sách Tỉnh/Thành và Phường/Xã
+const PROVINCE_API = 'https://provinces.open-api.vn/api/v2'
+const provinces = ref([])
+const wards = ref([])
 
 // Debug computed property for checkbox
 const isDefaultChecked = computed({
@@ -513,7 +522,6 @@ const isDefaultChecked = computed({
   },
   set(value) {
     addressForm.macDinh = value
-    console.log('Checkbox changed:', value)
   }
 })
 
@@ -529,10 +537,7 @@ const selectAvatar = (style, seed) => {
 const confirmAvatarSelection = () => {
   if (selectedAvatar.value) {
     personalInfo.avatar = selectedAvatar.value
-    // Use composable to save avatar
     saveAvatar(selectedAvatar.value)
-
-    // Show success toast
     toastMessage.value = 'Avatar đã được cập nhật thành công!'
     toastType.value = 'success'
     showToast.value = true
@@ -540,7 +545,6 @@ const confirmAvatarSelection = () => {
   showAvatarSelector.value = false
 }
 
-// Toast close handler
 const closeToast = () => {
   showToast.value = false
 }
@@ -560,8 +564,6 @@ const loadCustomerProfile = async () => {
       personalInfo.gender = profile.gioiTinh === 1 ? 'male' : profile.gioiTinh === 0 ? 'female' : ''
       personalInfo.cccd = profile.cccd || ''
       personalInfo.customerCode = profile.ma || ''
-
-      // Load avatar from composable
       personalInfo.avatar = getCurrentAvatarUrl()
     } else {
       error.value = response.message || 'Không thể tải thông tin khách hàng'
@@ -574,23 +576,30 @@ const loadCustomerProfile = async () => {
   }
 }
 
-// Load customer addresses
+// ĐÃ SỬA: Hàm load danh sách địa chỉ
 const loadCustomerAddresses = async () => {
   try {
     const response = await customerAPI.getAddresses()
 
     if (response.success) {
-      addresses.value = response.data.map(addr => ({
-        id: addr.id,
-        name: addr.tenKhachHang,
-        phoneNumber: addr.soDienThoai,
-        fullAddress: `${addr.diaChiCuThe}, ${addr.phuong}, ${addr.quan}, ${addr.thanhPho}`,
-        isDefault: addr.macDinh,
-        thanhPho: addr.thanhPho,
-        quan: addr.quan,
-        phuong: addr.phuong,
-        diaChiCuThe: addr.diaChiCuThe
-      }))
+      addresses.value = response.data.map(addr => {
+        // Kiểm tra nếu 'quan' là chuỗi "null" thì đổi thành rỗng để không bị hiển thị chữ null
+        const quanHienThi = (addr.quan === "null" || !addr.quan) ? '' : addr.quan;
+        
+        return {
+          id: addr.id,
+          // Ưu tiên lấy tên/SĐT lưu trong địa chỉ, nếu không có mới lấy của khách hàng
+          name: addr.tenNguoiNhan || addr.tenKhachHang,
+          phoneNumber: addr.soDienThoai || addr.soDienThoaiKhachHang,
+          // Dùng filter(Boolean) để tự động bỏ qua các trường bị rỗng
+          fullAddress: [addr.diaChiCuThe, addr.phuong, quanHienThi, addr.thanhPho].filter(Boolean).join(', '),
+          isDefault: addr.macDinh,
+          thanhPho: addr.thanhPho,
+          quan: quanHienThi,
+          phuong: addr.phuong,
+          diaChiCuThe: addr.diaChiCuThe
+        }
+      })
     } else {
       error.value = response.message || 'Không thể tải danh sách địa chỉ'
     }
@@ -600,22 +609,49 @@ const loadCustomerAddresses = async () => {
   }
 }
 
+// BỔ SUNG: Hàm load danh sách Tỉnh/Thành phố
+const fetchProvinces = async () => {
+  try {
+    const res = await axios.get(`${PROVINCE_API}/p/`)
+    provinces.value = res.data
+  } catch (err) {
+    console.error('Lỗi khi tải tỉnh thành:', err)
+  }
+}
+
+// BỔ SUNG: Xử lý khi thay đổi Tỉnh/Thành phố -> Load Phường/Xã
+const handleProvinceChange = async () => {
+  addressForm.phuong = ''; // Reset phường
+  wards.value = [];
+  
+  if (!addressForm.thanhPho) return;
+  
+  const selectedProvince = provinces.value.find(p => p.name === addressForm.thanhPho);
+  if (selectedProvince) {
+    try {
+      const res = await axios.get(`${PROVINCE_API}/p/${selectedProvince.code}?depth=2`);
+      wards.value = res.data.wards || [];
+    } catch (err) {
+      console.error('Lỗi khi tải phường xã:', err);
+    }
+  }
+};
 
 // Initialize data
 onMounted(async () => {
   try {
-    error.value = '' // Clear any previous errors
+    error.value = ''
 
-    // Check if user is authenticated
     if (!customerAPI.isAuthenticated()) {
       error.value = 'Bạn cần đăng nhập để xem thông tin tài khoản'
       return
     }
 
-    // Load customer data
+    // Chạy song song: Load profile, Load danh sách địa chỉ, Load Tỉnh/Thành phố
     await Promise.all([
       loadCustomerProfile(),
-      loadCustomerAddresses()
+      loadCustomerAddresses(),
+      fetchProvinces()
     ])
   } catch (err) {
     console.error('Error initializing customer data:', err)
@@ -639,9 +675,7 @@ const previousAddress = () => {
 // Validate CCCD input - only allow numbers
 const validateCCCD = (event) => {
   const value = event.target.value
-  // Remove any non-numeric characters
   const numericValue = value.replace(/[^0-9]/g, '')
-  // Update the model with cleaned value
   personalInfo.cccd = numericValue
 }
 
@@ -650,16 +684,12 @@ const updatePersonalInfo = async () => {
   try {
     loading.value = true
 
-    // Validate CCCD length if provided
     if (personalInfo.cccd && (personalInfo.cccd.length < 9 || personalInfo.cccd.length > 12)) {
       showNotification('Số CCCD/CMND phải có từ 9-12 chữ số', 'error')
       return
     }
 
-    // TODO: Implement profile update API call
     console.log('Updating personal info:', personalInfo)
-
-    // Show success notification
     showNotification('Thông tin cá nhân đã được cập nhật thành công!', 'success')
   } catch (err) {
     showNotification('Không thể cập nhật thông tin: ' + err.message, 'error')
@@ -669,49 +699,69 @@ const updatePersonalInfo = async () => {
   }
 }
 
-const editAddress = (address) => {
+// ĐÃ SỬA: Hàm editAddress cần load lại danh sách phường/xã tương ứng
+const editAddress = async (address) => {
   editingAddress.value = address
   addressForm.tenNguoiNhan = address.name
   addressForm.soDienThoai = address.phoneNumber
   addressForm.thanhPho = address.thanhPho
-  addressForm.quan = address.quan
   addressForm.phuong = address.phuong
   addressForm.diaChiCuThe = address.diaChiCuThe
   addressForm.macDinh = address.isDefault
+  
+  // Load lại danh sách phường xã cho tỉnh này
+  await handleProvinceChange();
+  // Gán lại phường sau khi API load xong
+  addressForm.phuong = address.phuong;
 }
 
 const closeAddressModal = () => {
   showAddAddressModal.value = false
   editingAddress.value = null
-  // Reset form completely
+  // Reset form
   Object.assign(addressForm, {
     tenNguoiNhan: '',
     soDienThoai: '',
     thanhPho: '',
-    quan: '',
     phuong: '',
     diaChiCuThe: '',
     macDinh: false
   })
+  wards.value = []; // Reset danh sách phường
 }
 
-// Toggle default address checkbox
 const saveAddress = async () => {
+  // Validate cơ bản
+  if (!addressForm.thanhPho || !addressForm.phuong) {
+    showNotification('Vui lòng chọn đầy đủ Tỉnh/Thành phố và Phường/Xã', 'error');
+    return;
+  }
+
+  const fullAddrText = `${addressForm.diaChiCuThe}, ${addressForm.phuong}, ${addressForm.thanhPho}`;
+
   const ok = await hoiXacNhan({
     title: editingAddress.value ? 'Lưu thay đổi địa chỉ?' : 'Thêm địa chỉ mới?',
-    details: [`${addressForm.diaChiCuThe}, ${addressForm.phuong}, ${addressForm.quan}, ${addressForm.thanhPho}`],
+    details: [fullAddrText],
     confirmText: 'Lưu'
   })
   if (!ok) return
   try {
     loading.value = true
 
-    // Debug log form data before saving
-    console.log('Saving address form:', addressForm)
+    // Payload gửi xuống Backend. 
+    // LƯU Ý: Backend của bạn nếu bắt buộc trường 'quan' (không được null), ta truyền chuỗi rỗng '' để tránh lỗi SQL
+    const payload = {
+      tenNguoiNhan: addressForm.tenNguoiNhan,
+      soDienThoai: addressForm.soDienThoai,
+      thanhPho: addressForm.thanhPho,
+      phuong: addressForm.phuong,
+      quan: 'null', // Truyền rỗng vì đã bỏ cấp Quận/Huyện
+      diaChiCuThe: addressForm.diaChiCuThe,
+      macDinh: addressForm.macDinh
+    }
 
     if (editingAddress.value) {
-      // Update existing address
-      const response = await customerAPI.updateAddress(editingAddress.value.id, addressForm)
+      const response = await customerAPI.updateAddress(editingAddress.value.id, payload)
       if (response.success) {
         await loadCustomerAddresses()
         closeAddressModal()
@@ -720,8 +770,7 @@ const saveAddress = async () => {
         showNotification('Không thể cập nhật địa chỉ. Vui lòng thử lại!', 'error')
       }
     } else {
-      // Add new address
-      const response = await customerAPI.addAddress(addressForm)
+      const response = await customerAPI.addAddress(payload)
       if (response.success) {
         await loadCustomerAddresses()
         closeAddressModal()
@@ -764,7 +813,6 @@ const deleteAddress = async (addressId) => {
         await loadCustomerAddresses()
         showNotification('Địa chỉ đã được xóa thành công!', 'success')
 
-        // Adjust carousel index if needed
         if (currentAddressIndex.value >= addresses.value.length && addresses.value.length > 0) {
           currentAddressIndex.value = addresses.value.length - 1
         }
@@ -968,7 +1016,7 @@ const deleteAddress = async (addressId) => {
 .st-block--status { background: #eafbf1; }
 
 .st-form__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.5rem; margin-bottom: 1.25rem; }
-.st-form__grid--3 { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.st-form__grid--3 { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); } /* Giữ lại class này phòng trường hợp dùng chỗ khác */
 .st-form__grid:last-child { margin-bottom: 0; }
 .st-form__col { display: flex; flex-direction: column; gap: 1.25rem; }
 .st-form__field { display: flex; flex-direction: column; gap: 0.5rem; }
